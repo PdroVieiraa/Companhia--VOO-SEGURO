@@ -6,7 +6,7 @@ A **Voo Seguro** é uma companhia aérea que visa garantir a satisfação de seu
 Ela opera em vários aeroportos pelo Brasil e conta com uma equipe de tripulação composta por pilotos, copilotos e comissários.  
 Atualmente, o controle de voos, reservas e tripulação é realizado em planilhas e cadernos, o que tem gerado diversos problemas, como reservas duplicadas e falta de controle sobre a disponibilidade de voos e assentos.  
 
-Para resolver esses problemas, a **Voo Seguro** contratou uma equipe de desenvolvedores de software (Platinum Logic & Innovation Group ou PLIG ) para desenvolver um sistema de gerenciamento de voos.
+Para resolver esses problemas, a **Voo Seguro** contratou uma equipe de desenvolvedores de software (**Platinum Logic & Innovation Group ou PLIG**) para desenvolver um sistema de gerenciamento de voos que foi nomeado de **SkyOps**
 
 **Requisitos e informações extra no PDF de [Requisitos](Docs/Trabalho_Pratico.pdf)**
 
