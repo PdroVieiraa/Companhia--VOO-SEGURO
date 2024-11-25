@@ -19,7 +19,6 @@ Para resolver esses problemas, a **Voo Seguro** contratou uma equipe de desenvol
 - **Italo Vinhas**    
 - **Pedro Vieira** – Scrum Master   
 
-teste
 ---
 
 
