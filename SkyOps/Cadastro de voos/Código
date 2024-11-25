@@ -1,0 +1,79 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_VOOS 100
+#define MAX_TRIPULACAO 5
+#define ARQUIVO_VOOS "voos.bin"
+
+// Estruturas de dados
+typedef struct {
+    char nome[50];
+    char funcao[20]; // "Piloto", "Copiloto", "Comissário"
+} Tripulacao;
+
+typedef struct {
+    char codigo[10];
+    char data[11];    // Formato: DD/MM/AAAA
+    char hora[6];     // Formato: HH:MM
+    char origem[50];
+    char destino[50];
+    float tarifa;
+    Tripulacao tripulacao[MAX_TRIPULACAO];
+    int qtd_tripulacao;
+    char aviao[50];
+} Voo;
+
+Voo voos[MAX_VOOS];
+int total_voos = 0;
+
+// Funções auxiliares para validação
+int validarData(const char *data) {
+    if (strlen(data) != 10 || data[2] != '/' || data[5] != '/') return 0;
+    for (int i = 0; i < 10; i++) {
+        if (i == 2 || i == 5) continue;
+        if (!isdigit(data[i])) return 0;
+    }
+    int dia = atoi(data);
+    int mes = atoi(data + 3);
+    int ano = atoi(data + 6);
+    if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || ano < 1900) return 0;
+    if ((mes == 4 || mes == 6 || mes == 9 || mes == 11) && dia > 30) return 0;
+    if (mes == 2) {
+        int bissexto = (ano % 4 == 0 && (ano % 100 != 0 || ano % 400 == 0));
+        if (dia > 28 + bissexto) return 0;
+    }
+    return 1;
+}
+
+int validarHora(const char *hora) {
+    if (strlen(hora) != 5 || hora[2] != ':') return 0;
+    for (int i = 0; i < 5; i++) {
+        if (i == 2) continue;
+        if (!isdigit(hora[i])) return 0;
+    }
+    int horas = atoi(hora);
+    int minutos = atoi(hora + 3);
+    return horas >= 0 && horas < 24 && minutos >= 0 && minutos < 60;
+}
+
+int validarTarifa(const char *tarifa_str, float *tarifa) {
+    char *endptr;
+    *tarifa = strtof(tarifa_str, &endptr);
+    if (*endptr != '\0' || *tarifa < 0) return 0; // Verifica se houve conversão válida e se o valor é positivo
+    return 1;
+}
+
+// Função para verificar se o código já existe
+int codigoJaExiste(const char *codigo) {
+    for (int i = 0; i < total_voos; i++) {
+        if (strcmp(voos[i].codigo, codigo) == 0) {
+            return 1; // Código já existe
+        }
+    }
+    return 0; // Código não encontrado
+}
+
+// Função para salvar os voos em arquivo binário
