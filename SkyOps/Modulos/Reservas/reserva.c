@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,34 +18,8 @@ typedef struct{
     int numAviao;
 }Informacao;
 
-int main(){
-    srand(time(NULL));
 
-    Informacao *i;
-    
-    i = (Informacao*)malloc(MAX*sizeof(Informacao));
-
-    if(i == NULL){
-        printf("ERRO ao realizar a alocacao de memoria da STRUCT");
-        return 1; //retorna 1 como ERRO
-    }
-
-    for(int j = 0; j < MAX; j++){
-        i[j].origemdoaviao = (char*)malloc(MAX*sizeof(char));
-
-        if(i[j].origemdoaviao == NULL){
-            printf("ERRO ao realizar a alocacao de memoria da ORIGEM do aviao na STRUCT");
-            return 1; //retorna 1 como ERRO
-        }
-
-        i[j].destinodoaviao = (char*)malloc(MAX*sizeof(char));
-    
-        if(i[j].destinodoaviao == NULL){
-            printf("ERRO realizar a alocacao de memoria do DESTINO do aviao na STRUCT");
-            return 1; //retorna 1 como ERRO
-        }
-    }
-
+void reserva(Informacao *aviao, int numAviao){
     char *destino, *origem;
 
     destino = (char*)malloc(MAX * sizeof(char));
@@ -61,9 +36,6 @@ int main(){
         return 1; //retorna 1 como ERRO
     }
 
-    printf("Bem vindo a aba de RESERVA da sua viagem\n\n\n");
-
-    //apartir daqui o usuario deve informar seu destino para encontrar um avião disponivel
 
     printf("Informe sua ORIGEM: ");
     fgets(origem, MAX, stdin);
@@ -76,19 +48,19 @@ int main(){
     destino[strcspn(destino, "\n")] = '\0';
     origem[strcspn(origem, "\n")] = '\0';
 
-    for(int j = 0; j < MAX; j++){
-        destino[j] = tolower(destino[j]);
-        origem[j] = tolower(destino[j]);
+    for(int i = 0; i < MAX; i++){
+        destino[i] = tolower(destino[i]);
+        origem[i] = tolower(origem[i]);
     }
 
-    for(int j = 0; j < MAX; j++){
-        if(strcmp(origem, i[j].origemdoaviao) == 0){
-            if(strcmp(destino, i[j].destinodoaviao) == 0){
+    for(int i = 0; i < MAX; i++){
+        if(strcmp(origem, aviao[i].origemdoaviao) == 0){
+            if(strcmp(destino, aviao[i].destinodoaviao) == 0){
                 printf("ASSENTOS LIBERADOS:\n\n");
-                for(int l = 0; l < 2; l++){
-                    for(int c = 0; c < MAX; c++){
-                        if(i->assentos[l][c] == 0){
-                            printf("Assento %d\n", i->assentos);
+                for(int j = 0; j < 2; j++){
+                    for(int k = 0; k < MAX; k++){
+                        if(aviao->assentos[j][k] == 0){
+                            printf("Assento %d\n", aviao->assentos[j][k]);
                         }
                     }
                 }
@@ -96,10 +68,98 @@ int main(){
         }
     }
 
-    for(int j = 0; j< MAX; j++){
-        free(i[j].destinodoaviao);
-        free(i[j].origemdoaviao);
+}
+
+void cancelarReserva(Informacao *aviao, int numAvioes){
+    int numAviao, linha, coluna;
+
+    printf("Informe o numero do seu aviao: ");
+    scanf("%d", &numAviao);
+
+    if(numAviao < 0 || numAviao >= numAvioes){
+        printf("Informe o numero do seu aviao corretamente!");
+        return;
     }
-    free(origem);
-    free(destino);
+
+    printf("Informe o numero da linha do seu assento: (0 ou 1)");
+    scanf("%d", linha);
+
+    printf("Informe o numero da coluna do seu assento: (0 a %d)", numAvioes);
+    scanf("%d", &coluna);
+
+        if (linha < 0 || linha >= 2 || coluna < 0 || coluna >= MAX) {
+        printf("Assento inválido.\n");
+        return;
+    }
+
+    if(aviao[numAviao].assentos[linha][coluna] == 1){
+        aviao[numAviao].assentos[linha][coluna] = 0;
+        printf("Reserva cancelada com sucesso!!");
+    }else{
+        printf("O assento informado esta disponivel!");
+    }
+}
+
+int main(){
+    srand(time(NULL));
+
+    Informacao *aviao;
+    
+    aviao = (Informacao*)malloc(MAX*sizeof(Informacao));
+
+    if(aviao == NULL){
+        printf("ERRO ao realizar a alocacao de memoria da STRUCT");
+        return 1; //retorna 1 como ERRO
+    }
+
+    for(int i = 0; i < MAX; i++){
+        aviao[i].origemdoaviao = (char*)malloc(MAX*sizeof(char));
+
+        if(aviao[i].origemdoaviao == NULL){
+            printf("ERRO ao realizar a alocacao de memoria da ORIGEM do aviao na STRUCT");
+            return 1; //retorna 1 como ERRO
+        }
+
+        aviao[i].destinodoaviao = (char*)malloc(MAX*sizeof(char));
+    
+        if(aviao[i].destinodoaviao == NULL){
+            printf("ERRO realizar a alocacao de memoria do DESTINO do aviao na STRUCT");
+            return 1; //retorna 1 como ERRO
+        }
+    }
+
+    int opcao;
+
+    printf("Bem vindo a aba de RESERVA da sua viagem\n\n\n");
+
+    do{
+    printf("Oque você deseja fazer: \n\n");
+    printf("[1] Realisar reserva de viagem; \n[2] Realisar o cancelamento da sua reserva; \n[0] Sair \n\n");
+    scanf("%d", &opcao);
+
+    switch (opcao) {
+            case 1:
+                reserva(aviao, MAX);
+                break;
+            case 2:
+                cancelarReserva(aviao, MAX);
+                break;
+            case 0:
+                printf("Saindo do sistema...\n");
+                break;
+            default:
+                printf("Opção inválida!\n");
+        }
+    } while (opcao != 0);
+
+    //apartir daqui o usuario deve informar seu destino para encontrar um avião disponivel
+
+
+    for(int j = 0; j< MAX; j++){
+        free(aviao[j].destinodoaviao);
+        free(aviao[j].origemdoaviao);
+    }
+
+
+    return 0;
 }
