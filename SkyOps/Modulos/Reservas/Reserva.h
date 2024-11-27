@@ -14,7 +14,7 @@ typedef struct{
 
 void reserva(Informacao *aviao, int numAviao);
 void cancelarReserva(Informacao *aviao, int numAvioes);
-
+void principalRESERVA();
 
 
 #endif
