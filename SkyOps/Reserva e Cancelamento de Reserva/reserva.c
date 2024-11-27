@@ -99,7 +99,7 @@ void cancelarReserva(Informacao *aviao, int numAvioes){
     }
 }
 
-int main(){
+int principalRESERVA(){
     srand(time(NULL));
 
     Informacao *aviao;
