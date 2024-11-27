@@ -15,14 +15,14 @@
 
 Usuario usuarios[MAX_USUARIOS];
 
-void carregarUsuarios();
-void salvarUsuarios();
+void carregarUsuarios(void);
+void salvarUsuarios(void);
 int idJaExiste(const char *id);
 int validarNome(const char *nome);
 int validarId(const char *id);
-int cadastrarUsuario();
-void adicionarPontos();
-void consultarPontos();
+int cadastrarUsuario(void);
+void consultarPontos(void);
+void adicionarPontos(void);
 
 
 #endif

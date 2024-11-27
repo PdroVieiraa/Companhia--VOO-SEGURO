@@ -17,7 +17,7 @@ typedef struct {
     char cargo[20];
 } Tripulantes;
 
-char *GerarNovoCodigo() {
+char *GerarNovoCodigo(void) {
 
     int codigo = 0;
 
@@ -147,6 +147,75 @@ void SalvarTripulantes(Tripulantes *tripulantes, int num_tripulantes) {
     fclose(arquivo);
     printf("\nDados salvos com sucesso no arquivo binário!\n");
 }
+
+void ExcluirTripulantes(void) {
+    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo para leitura! Nenhum tripulante encontrado.\n");
+        return;
+    }
+
+    int num_tripulantes;
+    fread(&num_tripulantes, sizeof(int), 1, arquivo);
+
+    if (num_tripulantes == 0) {
+        printf("Nenhum tripulante cadastrado.\n");
+        fclose(arquivo);
+        return;
+    }
+
+    Tripulantes *tripulantes = (Tripulantes *)malloc(num_tripulantes * sizeof(Tripulantes));
+    if (tripulantes == NULL) {
+        printf("Erro de alocação de memória!\n");
+        fclose(arquivo);
+        return;
+    }
+
+    fread(tripulantes, sizeof(Tripulantes), num_tripulantes, arquivo);
+    fclose(arquivo);
+
+    int codigo;
+    printf("\nDigite o código do tripulante a ser excluído: ");
+    scanf("%d", &codigo);
+
+    int encontrado = 0;
+    for (int i = 0; i < num_tripulantes; i++) {
+        if (tripulantes[i].codigo == codigo) {
+            encontrado = 1;
+
+            // Remove o tripulante deslocando os próximos para preencher o espaço
+            for (int j = i; j < num_tripulantes - 1; j++) {
+                tripulantes[j] = tripulantes[j + 1];
+            }
+
+            num_tripulantes--; // Diminui a contagem de tripulantes
+            break;
+        }
+    }
+
+    if (!encontrado) {
+        printf("Tripulante com código %06d não encontrado.\n", codigo);
+    } else {
+        // Reabre o arquivo para escrita e salva os novos dados
+        arquivo = fopen(ARQUIVO_BINARIO, "wb");
+        if (arquivo == NULL) {
+            printf("Erro ao abrir o arquivo para escrita!\n");
+            free(tripulantes);
+            return;
+        }
+
+        fwrite(&num_tripulantes, sizeof(int), 1, arquivo); // Atualiza o número de tripulantes
+        fwrite(tripulantes, sizeof(Tripulantes), num_tripulantes, arquivo);
+        fclose(arquivo);
+
+        printf("Tripulante com código %06d excluído com sucesso.\n", codigo);
+    }
+
+    free(tripulantes); // Libera a memória alocada
+}
+
+
+
 
 int main() {
    setlocale(LC_ALL, "Portuguese_Brazil.1252");
