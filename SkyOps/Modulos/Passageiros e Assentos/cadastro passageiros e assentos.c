@@ -8,18 +8,18 @@ typedef struct {
     char nome[50];
     char endereco[100];
     char telefone[15];
-    int fidelidade; // Pontos de fidelidade
+    int fidelidade; 
 } Passageiro;
 
 typedef struct {
     int numero;
     char classe[20];
-    int ocupado; // 0 = livre, 1 = ocupado
+    int ocupado; 
 } Assento;
 
 void cadastrarPassageiro(FILE *arquivo) {
     Passageiro p;
-    static int codigoAtual = 1; // Código único gerado automaticamente
+    static int codigoAtual = 1; 
 
     p.codigo = codigoAtual++;
     printf("Digite o nome do passageiro: ");
