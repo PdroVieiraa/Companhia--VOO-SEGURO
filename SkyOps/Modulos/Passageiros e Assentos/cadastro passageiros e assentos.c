@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Estrutura para armazenar os dados dos passageiros
 typedef struct {
     int codigo;
     char nome[50];
@@ -12,19 +11,16 @@ typedef struct {
     int fidelidade; // Pontos de fidelidade
 } Passageiro;
 
-// Estrutura para armazenar os dados dos assentos
 typedef struct {
     int numero;
     char classe[20];
     int ocupado; // 0 = livre, 1 = ocupado
 } Assento;
 
-// Função para cadastrar um novo passageiro
 void cadastrarPassageiro(FILE *arquivo) {
     Passageiro p;
     static int codigoAtual = 1; // Código único gerado automaticamente
 
-    // Geração de código único
     p.codigo = codigoAtual++;
     printf("Digite o nome do passageiro: ");
     scanf(" %[^
@@ -35,14 +31,12 @@ void cadastrarPassageiro(FILE *arquivo) {
     printf("Digite o telefone do passageiro: ");
     scanf(" %[^
 ]s", p.telefone);
-    p.fidelidade = 0; // Inicialmente sem pontos de fidelidade
+    p.fidelidade = 0;
 
-    // Salvar no arquivo binário
     fwrite(&p, sizeof(Passageiro), 1, arquivo);
     printf("Passageiro cadastrado com sucesso!\n");
 }
 
-// Função para gerar assentos
 void gerarAssentos(FILE *arquivo, int quantidade) {
     Assento a;
     for (int i = 1; i <= quantidade; i++) {
@@ -50,20 +44,17 @@ void gerarAssentos(FILE *arquivo, int quantidade) {
         printf("Defina a classe do assento %d (Ex.: Economica, Executiva): ", i);
         scanf(" %[^
 ]s", a.classe);
-        a.ocupado = 0; // Todos os assentos começam livres
+        a.ocupado = 0; 
 
-        // Salvar no arquivo binário
         fwrite(&a, sizeof(Assento), 1, arquivo);
     }
     printf("Assentos gerados e salvos com sucesso!\n");
 }
 
-// Função principal
 int main() {
     FILE *arquivoPassageiros, *arquivoAssentos;
     int opcao;
 
-    // Abrir arquivos binários
     arquivoPassageiros = fopen("passageiros.dat", "ab");
     if (arquivoPassageiros == NULL) {
         printf("Erro ao abrir arquivo de passageiros!\n");
@@ -104,7 +95,6 @@ int main() {
         }
     } while (opcao != 3);
 
-    // Fechar arquivos
     fclose(arquivoPassageiros);
     fclose(arquivoAssentos);
 
