@@ -2,46 +2,67 @@
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <ctype.h>
+
+#define MAX_VOOS 100
+#define MAX_TRIPULACAO 5
+#define ARQUIVO_VOOS "voos.bin"
 #define MAX_CODIGOS 100
 #define ARQUIVO_BINARIO "tripulantes.bin"
 
-/*---------------------------------------------------Ferramentas--------------------------------------------------------------*/
-
-int obterOpcao() {
-    int opcao;
-    
-    while (1) {
-        printf("\nEscolha uma das opcoes (Entre 0 e 4): ");
-        
-        // Verificar se a entrada é um número válido
-        if (scanf("%d", &opcao) == 1 && opcao >= 0 && opcao <= 4) {
-            while (getchar() != '\n');  // Limpa o buffer após a leitura
-            return opcao;  // Se for válido, retorna a opção
-        } else {
-            // Se não for válido, limpa o buffer e pede novamente
-            while (getchar() != '\n');
-            printf("Entrada inválida! Por favor, digite um número entre 0 e 4.\n");
-        }
-    }
-}
-
-/*---------------------------------------------------Funções---------------------------------------------------------------*/
-
 typedef struct {
-    char nome[60];    // Nome do tripulante
+    char nome[100];    // Nome do tripulante
     int codigo;       // Código único do tripulante
     int telefone;     // Número de telefone do tripulante
     char cargo[20];   // Cargo do tripulante (piloto, copiloto, comissário)
 } Tripulantes;
 
-    Tripulantes tripulantes[MAX_CODIGOS];
-    char *codigos_gerados[MAX_CODIGOS];
-    int num_codigos = 0;
-    int total_tripulantes = 0;
+typedef struct {
+    char codigo[10];
+    char data[11];    // Formato: DD/MM/AAAA
+    char hora[6];     // Formato: HH:MM
+    char origem[50];
+    char destino[50];
+    float tarifa;
+    Tripulantes tripulacao[MAX_TRIPULACAO];
+    int qtd_tripulacao;
+    char aviao[50];
+} Voo;
+
+
+
+
+/*---------------------------------------------------Ferramentas--------------------------------------------------------------*/
+
+void ConverterPrimeiraMaiuscula(char *str) {
+    int nova_palavra = 1;  // Variável para controlar quando é o início de uma nova palavra
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (nova_palavra && isalpha((unsigned char)str[i])) {
+            str[i] = toupper((unsigned char)str[i]);  // Primeira letra da palavra em maiúscula
+            nova_palavra = 0;
+        } else {
+            str[i] = tolower((unsigned char)str[i]);  // O restante das letras em minúscula
+        }
+
+        if (isspace((unsigned char)str[i])) {
+            nova_palavra = 1;  // Se encontrar um espaço, a próxima letra será a primeira da próxima palavra
+        }
+    }
+}
+
+/*---------------------------------------------------TRIPULANTES---------------------------------------------------------------*/
+
+Voo voos[MAX_VOOS];
+int total_voos = 0;
+
+Tripulantes tripulantes[MAX_CODIGOS];
+char *codigos_gerados[MAX_CODIGOS];
+int num_codigos = 0;
+int total_tripulantes = 0;
 
 char *GerarNovoCodigo(void) {
-    // Inicializa a semente do gerador de números aleatórios
-    srand(time(NULL));
+    srand(time(NULL));  // Inicializa a semente do gerador de números aleatórios
 
     int codigo = 0;
 
@@ -63,39 +84,10 @@ char *GerarNovoCodigo(void) {
     return codigo_str;
 }
 
-int VerificarCodigoArquivo(int codigo) {
-    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
-    if (arquivo == NULL) return 0;
-
-    int num_tripulantes;
-    fread(&num_tripulantes, sizeof(int), 1, arquivo);
-
-    Tripulantes tripulante;
-    for (int i = 0; i < num_tripulantes; i++) {
-        fread(&tripulante, sizeof(Tripulantes), 1, arquivo);
-        if (tripulante.codigo == codigo) {
-            fclose(arquivo);
-            return 1;
-        }
-    }
-    fclose(arquivo);
-    return 0;
-}
-
-int VerificarCodigo(char *novo_codigo, char *codigos_gerados[], int num_codigos) {
-    for (int i = 0; i < num_codigos; i++) {
-        if (strcmp(novo_codigo, codigos_gerados[i]) == 0) {
-            return 1;
-        }
-    }
-    return VerificarCodigoArquivo(atoi(novo_codigo)); // Conversão única aqui
-}
-
-void CadastroTripulantes(Tripulantes *tripulante, char *codigos_gerados[], int *num_codigos) {
+void CadastroTripulantes(Tripulantes *tripulante) {
     setlocale(LC_ALL, "Portuguese_Brazil.1252");
 
     char codigo[7];
-    int codigo_unico = 0;
 
     printf("Cadastro de Tripulante");
     printf("\n-------------------------------\n");
@@ -103,31 +95,26 @@ void CadastroTripulantes(Tripulantes *tripulante, char *codigos_gerados[], int *
     printf("Nome: ");
     fgets(tripulante->nome, sizeof(tripulante->nome), stdin);
     tripulante->nome[strcspn(tripulante->nome, "\n")] = '\0';
+    ConverterPrimeiraMaiuscula(tripulante->nome);
 
-    while (!codigo_unico) {
-        char *novo_codigo = GerarNovoCodigo();
-        codigo_unico = !VerificarCodigo(novo_codigo, codigos_gerados, *num_codigos);
-
-        if (codigo_unico) {
-            strcpy(codigo, novo_codigo);
-        }
-        free(novo_codigo);
-    }
+    // Gera o código aleatório
+    char *novo_codigo = GerarNovoCodigo();
+    strcpy(codigo, novo_codigo);
+    free(novo_codigo);  // Libera a memória alocada
 
     tripulante->codigo = atoi(codigo);
-    codigos_gerados[*num_codigos] = strdup(codigo);
-    (*num_codigos)++;
 
     printf("Código (Gerado automaticamente): %d\n", tripulante->codigo);
 
     printf("Telefone (ddd9xxxxxxxx): ");
     scanf("%d", &tripulante->telefone);
+    getchar();  // Consumir nova linha residual do buffer após scanf
 
     int cargo;
     do {
         printf("Cargo:\n 1 - Piloto(a)\n 2 - Copiloto(a)\n 3 - Comissário(a)\n");
         scanf("%d", &cargo);
-        getchar();
+        getchar();  // Consumir nova linha residual
 
         switch (cargo) {
             case 1:
@@ -145,221 +132,433 @@ void CadastroTripulantes(Tripulantes *tripulante, char *codigos_gerados[], int *
                 break;
         }
     } while (cargo == 0);
+    
+    printf("Cadastro salvo com sucesso!\n");
 }
 
-void ExibirTripulantes(Tripulantes tripulante) {
-    setlocale(LC_ALL, "Portuguese_Brazil.1252");
-
-    printf("\n--- Dados do Tripulante ---\n");
-    printf("Nome: %s\n", tripulante.nome);
-    printf("Código: %06d\n", tripulante.codigo);
-    printf("Telefone: %d\n", tripulante.telefone);
-    printf("Cargo: %s\n", tripulante.cargo);
-}
-
-void SalvarTripulantes(Tripulantes *tripulantes, int num_tripulantes) {
-    FILE *arquivo = fopen(ARQUIVO_BINARIO, "wb");  // Abre em modo escrita binária
+// Função para salvar tripulante no arquivo binário
+void SalvarTripulante(Tripulantes *tripulante) {
+    FILE *arquivo = fopen(ARQUIVO_BINARIO, "ab");  // Abrir para adicionar ao final
     if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo para escrita!\n");
-        exit(1);
+        printf("Erro ao abrir o arquivo!\n");
+        return;
     }
 
-    fwrite(&num_tripulantes, sizeof(int), 1, arquivo);  // Salva o número total de tripulantes
-    fwrite(tripulantes, sizeof(Tripulantes), num_tripulantes, arquivo);  // Salva a lista completa de tripulantes
+    // Escreve o tripulante no arquivo binário
+    fwrite(tripulante, sizeof(Tripulantes), 1, arquivo);
 
     fclose(arquivo);
-    printf("\nDados salvos com sucesso no arquivo binário!\n");
 }
 
-void AdicionarTripulante(Tripulantes *novo_tripulante) {
-    Tripulantes tripulantes[MAX_CODIGOS];
+// Função para ler todos os tripulantes do arquivo binário
+void LerTripulantes() {
+    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        return;
+    }
+
+    Tripulantes tripulante;
+    while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
+        printf("\nNome: %s\n", tripulante.nome);
+        printf("Código: %d\n", tripulante.codigo);
+        printf("Telefone: %d\n", tripulante.telefone);
+        printf("Cargo: %s\n", tripulante.cargo);
+        printf("-----------------------------\n");
+    }
+
+    fclose(arquivo);
+}
+
+// Função para excluir um tripulante com base no código
+void ExcluirTripulante(int codigo) {
+    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        return;
+    }
+
+    // Lê os tripulantes existentes
+    Tripulantes tripulantes[100];
     int num_tripulantes = 0;
-
-    // Carregar tripulantes existentes
-    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
-    if (arquivo != NULL) {
-        fread(&num_tripulantes, sizeof(int), 1, arquivo);  // Lê o número de tripulantes
-        fread(tripulantes, sizeof(Tripulantes), num_tripulantes, arquivo);  // Lê a lista de tripulantes
-        fclose(arquivo);
-    }
-
-    // Adicionar novo tripulante
-    if (num_tripulantes < MAX_CODIGOS) {
-        tripulantes[num_tripulantes] = *novo_tripulante;
+    while (fread(&tripulantes[num_tripulantes], sizeof(Tripulantes), 1, arquivo) == 1) {
         num_tripulantes++;
-
-        // Salvar todos os tripulantes novamente
-        SalvarTripulantes(tripulantes, num_tripulantes);
-    } else {
-        printf("Limite de tripulantes atingido!\n");
     }
-}
-
-void ExcluirTripulante(void) {
-    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
-    if (arquivo == NULL) {
-        printf("Erro ao abrir o arquivo para leitura! Nenhum tripulante encontrado.\n");
-        return;
-    }
-
-    int num_tripulantes;
-    fread(&num_tripulantes, sizeof(int), 1, arquivo);
-
-    if (num_tripulantes == 0) {
-        printf("Nenhum tripulante cadastrado.\n");
-        fclose(arquivo);
-        return;
-    }
-
-    Tripulantes *tripulantes = (Tripulantes *)malloc(num_tripulantes * sizeof(Tripulantes));
-    if (tripulantes == NULL) {
-        printf("Erro de alocação de memória!\n");
-        fclose(arquivo);
-        return;
-    }
-
-    fread(tripulantes, sizeof(Tripulantes), num_tripulantes, arquivo);
     fclose(arquivo);
 
-    int codigo;
-    printf("\nDigite o código do tripulante a ser excluído: ");
-    scanf("%d", &codigo);
+    // Cria um novo arquivo sem o tripulante a ser excluído
+    arquivo = fopen(ARQUIVO_BINARIO, "wb");  // Abre o arquivo para reescrever
 
     int encontrado = 0;
     for (int i = 0; i < num_tripulantes; i++) {
         if (tripulantes[i].codigo == codigo) {
             encontrado = 1;
-
-            // Remove o tripulante deslocando os próximos para preencher o espaço
-            for (int j = i; j < num_tripulantes - 1; j++) {
-                tripulantes[j] = tripulantes[j + 1];
-            }
-
-            num_tripulantes--; // Diminui a contagem de tripulantes
-            break;
+        } else {
+            fwrite(&tripulantes[i], sizeof(Tripulantes), 1, arquivo);
         }
     }
 
-    if (!encontrado) {
-        printf("Tripulante com código %06d não encontrado.\n", codigo);
+    if (encontrado) {
+        printf("Tripulante excluído com sucesso!\n");
     } else {
-        // Reabre o arquivo para escrita e salva os novos dados
-        arquivo = fopen(ARQUIVO_BINARIO, "wb");
-        if (arquivo == NULL) {
-            printf("Erro ao abrir o arquivo para escrita!\n");
-            free(tripulantes);
-            return;
-        }
-
-        fwrite(&num_tripulantes, sizeof(int), 1, arquivo); // Atualiza o número de tripulantes
-        fwrite(tripulantes, sizeof(Tripulantes), num_tripulantes, arquivo);
-        fclose(arquivo);
-
-        printf("Tripulante com código %06d excluído com sucesso.\n", codigo);
-    }
-
-    free(tripulantes); // Libera a memória alocada
-}
-
-void ListarTripulantesRegistrados() {
-    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
-    if (arquivo == NULL) {
-        printf("Nenhum tripulante registrado ainda ou erro ao abrir o arquivo.\n");
-        return;
-    }
-
-    int num_tripulantes;
-    fread(&num_tripulantes, sizeof(int), 1, arquivo);  // Lê o número de tripulantes no início do arquivo
-
-    if (num_tripulantes == 0) {
-        printf("Nenhum tripulante registrado.\n");
-    } else {
-        printf("\n--- Lista de Tripulantes Registrados ---\n");
-        Tripulantes tripulante;
-
-        for (int i = 0; i < num_tripulantes; i++) {
-            fread(&tripulante, sizeof(Tripulantes), 1, arquivo);  // Lê cada tripulante do arquivo
-            printf("Código: %d\n", tripulante.codigo);
-            printf("Nome: %s\n", tripulante.nome);
-            printf("Telefone: %d\n", tripulante.telefone);
-            printf("Cargo: %s\n", tripulante.cargo);
-            printf("----------------------------------------\n");
-        }
+        printf("Tripulante com o código %d não encontrado!\n", codigo);
     }
 
     fclose(arquivo);
-
-    printf("\nPressione Enter para voltar ao menu...");
-    getchar();  // Aguarda o Enter
-    printf("\n----------------------------------------\n");
 }
 
-void BuscarTripulante(Tripulantes *tripulantes, int total_tripulantes) {
-    int opcao_busca;
-    char termo[50];
+void BuscarTripulante() {
+
+
+    FILE *arquivo = fopen(ARQUIVO_BINARIO, "rb");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo!\n");
+        return;
+    }
+
+    int criterio;
+    printf("Escolha o critério de busca:\n");
+    printf("1 - Buscar por código\n");
+    printf("2 - Buscar por nome\n");
+    printf("3 - Buscar por cargo\n");
+    printf("Escolha uma opção: ");
+    scanf("%d", &criterio);
+    getchar();  // Consumir a nova linha após o scanf
+
+    Tripulantes tripulante;
     int encontrado = 0;
 
-    printf("\nEscolha uma opção de busca:\n");
-    printf("1 - Buscar por Nome\n");
-    printf("2 - Buscar por Cargo\n");
-    printf("3 - Buscar por Código\n");
-    printf("Escolha uma opção (1-3): ");
-    scanf("%d", &opcao_busca);
-    getchar();  // Limpa o buffer
-
-    switch(opcao_busca) {
-        case 1:  // Buscar por Nome
-            printf("Digite o nome do tripulante: ");
-            fgets(termo, sizeof(termo), stdin);
-            termo[strcspn(termo, "\n")] = '\0';  // Remove o \n deixado pelo fgets
-
-            for (int i = 0; i < total_tripulantes; i++) {
-                if (strstr(tripulantes[i].nome, termo) != NULL) {  // Busca se o nome contém o termo
-                    printf("\nTripulante encontrado:\n");
-                    ExibirTripulantes(tripulantes[i]);
-                    encontrado = 1;
-                    break;
-                }
-            }
-            break;
-
-        case 2:  // Buscar por Cargo
-            printf("Digite o cargo do tripulante: ");
-            fgets(termo, sizeof(termo), stdin);
-            termo[strcspn(termo, "\n")] = '\0';  // Remove o \n deixado pelo fgets
-
-            for (int i = 0; i < total_tripulantes; i++) {
-                if (strstr(tripulantes[i].cargo, termo) != NULL) {  // Busca se o cargo contém o termo
-                    printf("\nTripulante encontrado:\n");
-                    ExibirTripulantes(tripulantes[i]);
-                    encontrado = 1;
-                    break;
-                }
-            }
-            break;
-
-        case 3:  // Buscar por Código
-            printf("Digite o código do tripulante: ");
+    switch (criterio) {
+        case 1: {
             int codigo;
+            printf("Digite o código do tripulante: ");
             scanf("%d", &codigo);
+            getchar();
 
-            for (int i = 0; i < total_tripulantes; i++) {
-                if (tripulantes[i].codigo == codigo) {  // Compara o código diretamente
-                    printf("\nTripulante encontrado:\n");
-                    ExibirTripulantes(tripulantes[i]);
+            while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
+                if (tripulante.codigo == codigo) {
+                    printf("\nNome: %s\n", tripulante.nome);
+                    printf("Código: %d\n", tripulante.codigo);
+                    printf("Telefone: %d\n", tripulante.telefone);
+                    printf("Cargo: %s\n", tripulante.cargo);
+                    printf("-----------------------------\n");
                     encontrado = 1;
                     break;
                 }
             }
             break;
+        }
+
+        case 2: {
+            char nome[100];
+            printf("Digite o nome do tripulante: ");
+            fgets(nome, sizeof(nome), stdin);
+            nome[strcspn(nome, "\n")] = '\0';  // Remover o caractere de nova linha
+
+            while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
+                if (strstr(tripulante.nome, nome) != NULL) {  // Verifica se o nome contém o termo
+                    printf("\nNome: %s\n", tripulante.nome);
+                    printf("Código: %d\n", tripulante.codigo);
+                    printf("Telefone: %d\n", tripulante.telefone);
+                    printf("Cargo: %s\n", tripulante.cargo);
+                    printf("-----------------------------\n");
+                    encontrado = 1;
+                }
+            }
+            break;
+        }
+
+        case 3: {
+            char cargo[50];
+            printf("Digite o cargo do tripulante: ");
+            fgets(cargo, sizeof(cargo), stdin);
+            cargo[strcspn(cargo, "\n")] = '\0';  // Remover o caractere de nova linha
+
+            while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
+                if (strstr(tripulante.cargo, cargo) != NULL) {  // Verifica se o cargo contém o termo
+                    printf("\nNome: %s\n", tripulante.nome);
+                    printf("Código: %d\n", tripulante.codigo);
+                    printf("Telefone: %d\n", tripulante.telefone);
+                    printf("Cargo: %s\n", tripulante.cargo);
+                    printf("-----------------------------\n");
+                    encontrado = 1;
+                }
+            }
+            break;
+        }
 
         default:
-            printf("Opção inválida! Escolha entre 1 e 3.\n");
-            break;
+            printf("Opção inválida!\n");
+            fclose(arquivo);
+            return;
     }
 
     if (!encontrado) {
-        printf("\nNenhum tripulante encontrado com o critério informado.\n");
+        printf("Nenhum tripulante encontrado com os critérios fornecidos.\n");
+    }
+
+    fclose(arquivo);
+}
+
+/*------------------------------------------------------------------VOOS--------------------------------------------------------------------------*/
+
+int validarData(const char *data) {
+    if (strlen(data) != 10 || data[2] != '/' || data[5] != '/') return 0;
+    for (int i = 0; i < 10; i++) {
+        if (i == 2 || i == 5) continue;
+        if (!isdigit(data[i])) return 0;
+    }
+    int dia = atoi(data);
+    int mes = atoi(data + 3);
+    int ano = atoi(data + 6);
+    if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || ano < 1900) return 0;
+    if ((mes == 4 || mes == 6 || mes == 9 || mes == 11) && dia > 30) return 0;
+    if (mes == 2) {
+        int bissexto = (ano % 4 == 0 && (ano % 100 != 0 || ano % 400 == 0));
+        if (dia > 28 + bissexto) return 0;
+    }
+    return 1;
+}
+
+int validarHora(const char *hora) {
+    if (strlen(hora) != 5 || hora[2] != ':') return 0;
+    for (int i = 0; i < 5; i++) {
+        if (i == 2) continue;
+        if (!isdigit(hora[i])) return 0;
+    }
+    int horas = atoi(hora);
+    int minutos = atoi(hora + 3);
+    return horas >= 0 && horas < 24 && minutos >= 0 && minutos < 60;
+}
+
+int validarTarifa(const char *tarifa_str, float *tarifa) {
+    char *endptr;
+    *tarifa = strtof(tarifa_str, &endptr);
+    if (*endptr != '\0' || *tarifa < 0) return 0; // Verifica se houve conversão válida e se o valor é positivo
+    return 1;
+}
+
+// Função para verificar se o código já existe
+int codigoJaExiste(const char *codigo) {
+    for (int i = 0; i < total_voos; i++) {
+        if (strcmp(voos[i].codigo, codigo) == 0) {
+            return 1; // Código já existe
+        }
+    }
+    return 0; // Código não encontrado
+}
+
+// Função para salvar os voos em arquivo binário
+void salvarVoos() {
+    FILE *arquivo = fopen(ARQUIVO_VOOS, "wb");
+    if (!arquivo) {
+        perror("Erro ao abrir o arquivo para escrita");
+        return;
+    }
+    fwrite(&total_voos, sizeof(int), 1, arquivo);
+    fwrite(voos, sizeof(Voo), total_voos, arquivo);
+    fclose(arquivo);
+    printf("Dados salvos com sucesso!\n");
+}
+
+// Função para carregar os voos do arquivo binário
+void carregarVoos() {
+    FILE *arquivo = fopen(ARQUIVO_VOOS, "rb");
+    if (!arquivo) {
+        printf("Nenhum arquivo de dados encontrado. Iniciando sistema vazio.\n");
+        return;
+    }
+    fread(&total_voos, sizeof(int), 1, arquivo);
+    fread(voos, sizeof(Voo), total_voos, arquivo);
+    fclose(arquivo);
+    printf("Dados carregados com sucesso!\n");
+}
+
+void adicionarVoo() {
+    if (total_voos >= MAX_VOOS) {
+        printf("Limite de voos atingido!\n");
+        return;
+    }
+
+    Voo novoVoo;
+
+    do {
+        printf("-----------------------------\n");
+        printf("-Código do voo: ");
+        scanf("%s", novoVoo.codigo);
+        if (codigoJaExiste(novoVoo.codigo)) {
+            printf("Código já existe! Por favor, insira um código único.\n");
+        }
+    } while (codigoJaExiste(novoVoo.codigo));
+
+    do {
+        printf("-----------------------------\n");
+        printf("-Data do voo (DD/MM/AAAA): ");
+        scanf("%s", novoVoo.data);
+        if (!validarData(novoVoo.data)) {
+            printf("Data inválida! Use o formato DD/MM/AAAA e insira apenas números válidos.\n");
+        }
+    } while (!validarData(novoVoo.data));
+
+    do {
+        printf("-----------------------------\n");
+        printf("-Hora do voo (HH:MM): ");
+        scanf("%s", novoVoo.hora);
+        if (!validarHora(novoVoo.hora)) {
+            printf("Hora inválida! Use o formato HH:MM e insira apenas números válidos.\n");
+        }
+    } while (!validarHora(novoVoo.hora));
+
+    printf("-----------------------------\n");
+    printf("-Origem: ");
+    scanf(" %[^\n]", novoVoo.origem);
+
+    printf("-----------------------------\n");
+    printf("-Destino: ");
+    scanf(" %[^\n]", novoVoo.destino);
+
+    char tarifa_str[20];
+    do {
+        printf("-----------------------------\n");
+        printf("-Tarifa (apenas números): ");
+        scanf("%s", tarifa_str);
+        if (!validarTarifa(tarifa_str, &novoVoo.tarifa)) {
+            printf("Tarifa inválida! Insira um número positivo válido.\n");
+        }
+    } while (!validarTarifa(tarifa_str, &novoVoo.tarifa));
+
+    printf("-----------------------------\n");
+    printf("-Informe o nome do avião: ");
+    scanf(" %[^\n]", novoVoo.aviao);
+
+    // Adicionar tripulação
+ novoVoo.qtd_tripulacao = 0;
+    int piloto_encontrado = 0, copiloto_encontrado = 0, opcao_comissario, codigo_tripulante, encontrado = 0;
+    Tripulantes tripulante;
+    int adicionar_tripulantes;
+
+    while (piloto_encontrado == 0 || copiloto_encontrado == 0) {
+        printf("-----------------------------\n");
+        printf("-Tripulantes: \n");
+        printf("1- Adicionar\n");
+        printf("2- Buscar\n");
+        printf("0- Cancelar\n");
+        scanf("%d", &adicionar_tripulantes);
+        while (getchar() != '\n');  // Limpar o buffer do teclado
+
+        switch (adicionar_tripulantes) {
+    case 1:
+        // Adicionando piloto
+        printf("\nDigite o código do piloto: ");
+        scanf("%d", &codigo_tripulante);
+        while (getchar() != '\n');  // Limpar o buffer do teclado
+
+        FILE *arquivo = fopen("tripulantes.bin", "rb");
+        if (arquivo == NULL) {
+            perror("Erro ao abrir o arquivo");
+            return 1;
+        }
+
+        while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
+            // Adiciona a comparação com strncmp para garantir que o cargo "piloto" seja verificado corretamente
+            if (tripulante.codigo == codigo_tripulante && strncmp(tripulante.cargo, "Piloto(a)", sizeof(tripulante.cargo)) == 0)  {
+                printf("\nNome: %s\n", tripulante.nome);
+                printf("Código: %d\n", tripulante.codigo);
+                printf("Telefone: %d\n", tripulante.telefone);
+                printf("Cargo: %s\n", tripulante.cargo);
+                printf("-----------------------------\n");
+
+                novoVoo.tripulacao[0] = tripulante;  // Adiciona o piloto
+                piloto_encontrado = 1;
+                novoVoo.qtd_tripulacao = 1;  // Incrementa a quantidade de tripulantes
+                printf("Piloto adicionado à tripulação.\n");
+                encontrado = 1;
+                break;
+            }
+        }
+        fclose(arquivo);
+        if (!encontrado) {
+            printf("Piloto não encontrado ou cargo incorreto.\n");
+        }
+        break;
+
+            case 2:
+                // Buscar tripulação
+                printf("\nBuscando tripulação...\n");
+                LerTripulantes();
+                break;
+
+            case 0:
+                // Cancelar
+                printf("Cancelando...\n");
+                return 0;
+
+            default:
+                printf("Opção inválida! Tente novamente.\n");
+                break;
+        }
+    }
+
+    // Após piloto e copiloto encontrados, perguntar sobre o comissário
+    printf("Deseja adicionar um comissário (1 para sim, 0 para não)? ");
+    scanf("%d", &opcao_comissario);
+    while (getchar() != '\n');  // Limpar o buffer do teclado
+
+    if (opcao_comissario == 1 && novoVoo.qtd_tripulacao < MAX_TRIPULACAO) {
+        printf("Digite o código do comissário: ");
+        scanf("%d", &codigo_tripulante);
+        while (getchar() != '\n');  // Limpar o buffer do teclado
+
+        FILE* arquivo = fopen("tripulantes.bin", "rb");
+        if (arquivo == NULL) {
+            perror("Erro ao abrir o arquivo");
+            return 1;
+        }
+
+        encontrado = 0;
+        while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
+            if (tripulante.codigo == codigo_tripulante && strcmp(tripulante.cargo, "comissário") == 0) {
+                novoVoo.tripulacao[novoVoo.qtd_tripulacao] = tripulante;  // Adiciona o comissário
+                novoVoo.qtd_tripulacao++;
+                printf("Comissário adicionado à tripulação.\n");
+                encontrado = 1;
+                break;
+            }
+        }
+        fclose(arquivo);
+
+        if (!encontrado) {
+            printf("Comissário não encontrado ou cargo incorreto.\n");
+        }
+    }
+
+    voos[total_voos++] = novoVoo;
+    printf("Voo cadastrado com sucesso!\n");
+
+    salvarVoos(); // Salvar os dados atualizados
+    return 0;
+}
+
+// Função para listar todos os voos
+void listarVoos() {
+    if (total_voos == 0) {
+        printf("Nenhum voo cadastrado.\n");
+        return;
+    }
+
+    for (int i = 0; i < total_voos; i++) {
+        printf("\nVoo %d:\n", i + 1);
+        printf("Código: %s\n", voos[i].codigo);
+        printf("Data: %s\n", voos[i].data);
+        printf("Hora: %s\n", voos[i].hora);
+        printf("Origem: %s\n", voos[i].origem);
+        printf("Destino: %s\n", voos[i].destino);
+        printf("Tarifa: %.2f\n", voos[i].tarifa);
+        printf("Avião: %s\n", voos[i].aviao);
+        printf("Tripulação:\n");
+        for (int j = 0; j < voos[i].qtd_tripulacao; j++) {
+            printf("  Nome: %s, Função: %s\n", voos[i].tripulacao[j].nome, voos[i].tripulacao[i].cargo);
+        }
     }
 }
 
@@ -367,10 +566,11 @@ void BuscarTripulante(Tripulantes *tripulantes, int total_tripulantes) {
 
 void TRIPULANTES(){
 
+
+
     int opcao;
+    int codigo = 0;
     Tripulantes tripulantes[MAX_CODIGOS];
-    char *codigos_gerados[MAX_CODIGOS];
-    int num_codigos = 0;
     int total_tripulantes = 0;
 
     do
@@ -396,23 +596,25 @@ void TRIPULANTES(){
             break;
         case 1:
            while (continuar && total_tripulantes < MAX_CODIGOS) {
-        CadastroTripulantes(&tripulantes[total_tripulantes], codigos_gerados, &num_codigos);
-        ExibirTripulantes(tripulantes[total_tripulantes]);
+        CadastroTripulantes(&tripulantes);
+        SalvarTripulante(&tripulantes);
         total_tripulantes++;
-        SalvarTripulantes(tripulantes, total_tripulantes);
 
         printf("\nDeseja cadastrar outro tripulante? (1 - Sim / 0 - Não): ");
         scanf("%d", &continuar);
+        printf("\n");
         getchar();
     } break;
         case 2:
-            ListarTripulantesRegistrados("tripulantes.bin");
+        LerTripulantes();
             break;
         case 3:
-            BuscarTripulante(tripulantes, total_tripulantes);
+        BuscarTripulante();
             break;
         case 4:
-            ExcluirTripulante();
+            printf("Digite o código do tripulante a ser excluído: ");
+            scanf("%d", &codigo);
+            ExcluirTripulante(codigo); 
             break;
         default:
         printf("\nNumero invalido, selecione novamente!\n");
@@ -420,6 +622,39 @@ void TRIPULANTES(){
         }
     } while (opcao != 0);
 }
+
+void VOOS() {
+    carregarVoos(); // Carregar os dados do arquivo ao iniciar o programa
+
+    int opcao;
+
+    do {
+        printf("\n--- Sistema de Cadastro de Voos ---\n");
+        printf("1. Adicionar voo\n");
+        printf("2. Listar voos\n");
+        printf("3. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                adicionarVoo();
+                break;
+            case 2:
+                listarVoos();
+                break;
+            case 3:
+                salvarVoos();
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opção inválida!\n");
+        }
+    } while (opcao != 3);
+
+    return 0;
+}
+
 
 /*-----------------------------------------------------------------MAIN--------------------------------------------------------------------------*/
 
@@ -447,7 +682,6 @@ int main() {
     printf("\n");
 
 
-
         switch (opcao)
         {
         case 0:
@@ -460,7 +694,7 @@ int main() {
             //PASSAGEIROS();
             break;
         case 3:
-            //VOOS();
+            VOOS();
             break;
         case 4:
             //RESERVAS();
