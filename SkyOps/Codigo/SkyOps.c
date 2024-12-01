@@ -432,7 +432,7 @@ void adicionarVoo() {
     scanf(" %[^\n]", novoVoo.aviao);
 
     // Adicionar tripulação
- novoVoo.qtd_tripulacao = 0;
+    novoVoo.qtd_tripulacao = 0;
     int piloto_encontrado = 0, copiloto_encontrado = 0, opcao_comissario, codigo_tripulante, encontrado = 0;
     Tripulantes tripulante;
     int adicionar_tripulantes;
@@ -479,7 +479,45 @@ void adicionarVoo() {
         fclose(arquivo);
         if (!encontrado) {
             printf("Piloto não encontrado ou cargo incorreto.\n");
-        }
+        }else if (copiloto_encontrado == 0) {
+                // Adicionando copiloto
+                printf("\nDigite o código do copiloto: ");
+                scanf("%d", &codigo_tripulante);
+                while (getchar() != '\n');  // Limpar o buffer do teclado
+
+                FILE *arquivo = fopen("tripulantes.bin", "rb");
+                if (arquivo == NULL) {
+                    perror("Erro ao abrir o arquivo");
+                    return 1;
+                }
+
+                encontrado = 0;
+                while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
+                    if (tripulante.codigo == codigo_tripulante && strncmp(tripulante.cargo, "Copiloto(a)", sizeof(tripulante.cargo)) == 0) {
+                        printf("\nNome: %s\n", tripulante.nome);
+                        printf("Código: %d\n", tripulante.codigo);
+                        printf("Telefone: %d\n", tripulante.telefone);
+                        printf("Cargo: %s\n", tripulante.cargo);
+                        printf("-----------------------------\n");
+
+                        novoVoo.tripulacao[1] = tripulante;  // Adiciona o copiloto
+                        copiloto_encontrado = 1;
+                        novoVoo.qtd_tripulacao++;  // Incrementa a quantidade de tripulantes
+                        printf("Copiloto adicionado à tripulação.\n");
+                        encontrado = 1;
+                        break;
+                    }
+                }
+                fclose(arquivo);
+                if (!encontrado) {
+                    printf("Copiloto não encontrado ou cargo incorreto.\n");
+                }
+            } else {
+                printf("Ambos, piloto e copiloto, já foram adicionados.\n");
+            }
+            break;
+
+
         break;
 
             case 2:
@@ -532,9 +570,11 @@ void adicionarVoo() {
         }
     }
 
+    printf("-----------------------------\n");
     voos[total_voos++] = novoVoo;
     printf("Voo cadastrado com sucesso!\n");
 
+    printf("-----------------------------\n");
     salvarVoos(); // Salvar os dados atualizados
     return 0;
 }
@@ -547,18 +587,27 @@ void listarVoos() {
     }
 
     for (int i = 0; i < total_voos; i++) {
+        printf("\n-----------------------------\n");
         printf("\nVoo %d:\n", i + 1);
         printf("Código: %s\n", voos[i].codigo);
+        printf("\n-----------------------------\n");
         printf("Data: %s\n", voos[i].data);
+        printf("\n-----------------------------\n");
         printf("Hora: %s\n", voos[i].hora);
+        printf("\n-----------------------------\n");
         printf("Origem: %s\n", voos[i].origem);
+        printf("\n-----------------------------\n");
         printf("Destino: %s\n", voos[i].destino);
+        printf("\n-----------------------------\n");
         printf("Tarifa: %.2f\n", voos[i].tarifa);
+        printf("\n-----------------------------\n");
         printf("Avião: %s\n", voos[i].aviao);
+        printf("\n-----------------------------\n");
         printf("Tripulação:\n");
         for (int j = 0; j < voos[i].qtd_tripulacao; j++) {
-            printf("  Nome: %s, Função: %s\n", voos[i].tripulacao[j].nome, voos[i].tripulacao[i].cargo);
+            printf("Nome: %s\nFunção: %s\n", voos[i].tripulacao[j].nome, voos[i].tripulacao[j].cargo);
         }
+        printf("-----------------------------\n");
     }
 }
 
