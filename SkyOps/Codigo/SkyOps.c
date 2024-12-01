@@ -13,27 +13,6 @@
 #define MIN_TEMPO 1000
 #define MAX_TEMPO 5000
 
-
-
-typedef struct{
-    int numeroAssento;
-    char *nomePassageiro;
-}Assentos;
-
-typedef struct{
-    char *origemdoaviao; //deixar como padrao tudo minusculo
-    char *destinodoaviao; //deixar como padrao tudo minusculo
-    int assentos[2][MAX]; //1 ocupado e 0 desocupado
-    int numAviao;
-    Assentos informacaoAssento[MAX];
-}Informacao;
-
-typedef struct{
-    int codigo;
-    char *nome;
-    Informacao *viagem;
-}Passageiro;
-
 typedef struct {
     char nome[100];    // Nome do tripulante
     int codigo;       // Código único do tripulante
@@ -53,8 +32,28 @@ typedef struct {
     char aviao[50];
 } Voo;
 
+typedef struct {
+    int codigo;           
+    char nome[100];       
+    char endereco[150];
+    char telefone[20];
+    int fidelidade;       
+    int pontos;           
+} Passageiro;
 
+typedef struct {
+    int numero;
+    int codigoVoo;
+    int status;
+} Assento;
 
+typedef struct{
+    char *origemdoaviao; //deixar como padrao tudo minusculo
+    char *destinodoaviao; //deixar como padrao tudo minusculo
+    int assentos[2][MAX]; //1 ocupado e 0 desocupado
+    int numAviao;
+    Assentos informacaoAssento[MAX];
+}Informacao;
 
 /*---------------------------------------------------Ferramentas--------------------------------------------------------------*/
 
