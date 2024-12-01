@@ -9,6 +9,30 @@
 #define ARQUIVO_VOOS "voos.bin"
 #define MAX_CODIGOS 100
 #define ARQUIVO_BINARIO "tripulantes.bin"
+#define MAX 200
+#define MIN_TEMPO 1000
+#define MAX_TEMPO 5000
+
+
+
+typedef struct{
+    int numeroAssento;
+    char *nomePassageiro;
+}Assentos;
+
+typedef struct{
+    char *origemdoaviao; //deixar como padrao tudo minusculo
+    char *destinodoaviao; //deixar como padrao tudo minusculo
+    int assentos[2][MAX]; //1 ocupado e 0 desocupado
+    int numAviao;
+    Assentos informacaoAssento[MAX];
+}Informacao;
+
+typedef struct{
+    int codigo;
+    char *nome;
+    Informacao *viagem;
+}Passageiro;
 
 typedef struct {
     char nome[100];    // Nome do tripulante
