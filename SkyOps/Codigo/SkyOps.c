@@ -1122,6 +1122,7 @@ int main() {
     printf("3 - Voos\n");
     printf("4 - Reservas\n");
     printf("5 - Programa fidelidade\n");
+    printf("6 - Assentos\n");
     printf("0 - SAIR\n");
 
     printf("\nEscolha uma das opcoes (Entre 0 e 5): ");
