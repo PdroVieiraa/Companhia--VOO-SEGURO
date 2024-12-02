@@ -1036,7 +1036,7 @@ void PASSAGEIROS() {
             printf("\nNúmero inválido, selecione novamente!\n");
             break;
         }
-    } while (opcao != 0);
+    } while (opcao != 0);
 }
 
 void ASSENTOS() {
@@ -1100,7 +1100,7 @@ void ASSENTOS() {
             printf("\nNúmero inválido, selecione novamente!\n");
             break;
         }
-    } while (opcao != 0);
+    } while (opcao != 0);
 }
 
 /*-----------------------------------------------------------------MAIN--------------------------------------------------------------------------*/
