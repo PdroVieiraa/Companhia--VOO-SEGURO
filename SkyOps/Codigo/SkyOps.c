@@ -983,6 +983,125 @@ void VOOS() {
     return 0;
 }
 
+void PASSAGEIROS() {
+    int opcao;
+    int codigo = 0;
+    Passageiro passageiros[MAX_CODIGOS];
+    int total_passageiros = 0;
+
+    do {
+        printf("\tCadastro de Passageiros\n");
+        printf("\n");
+        printf("1 - Cadastrar passageiro\n");
+        printf("2 - Lista de passageiros\n");
+        printf("3 - Buscar passageiro\n");
+        printf("4 - Deletar passageiro\n");
+        printf("0 - Voltar ao menu principal\n");
+        printf("\nEscolha uma das opções (Entre 0 e 4): ");
+        scanf("%d", &opcao);
+        printf("\n");
+
+        while (getchar() != '\n'); // Limpar buffer de entrada
+
+        int continuar = 1;
+        switch (opcao) {
+        case 0:
+            break;
+        case 1:
+            while (continuar && total_passageiros < MAX_CODIGOS) {
+                CadastroPassageiro(&passageiros[total_passageiros]);
+                SalvarPassageiro(&passageiros[total_passageiros]);
+                total_passageiros++;
+
+                printf("\nDeseja cadastrar outro passageiro? (1 - Sim / 0 - Não): ");
+                scanf("%d", &continuar);
+                printf("\n");
+                getchar();
+            }
+            break;
+        case 2:
+            ListarPassageiros();
+            break;
+        case 3:
+            printf("Digite o código do passageiro a ser buscado: ");
+            scanf("%d", &codigo);
+            BuscarPassageiro(codigo);
+            break;
+        case 4:
+            printf("Digite o código do passageiro a ser excluído: ");
+            scanf("%d", &codigo);
+            ExcluirPassageiro(codigo);
+            break;
+        default:
+            printf("\nNúmero inválido, selecione novamente!\n");
+            break;
+        }
+    } while (opcao != 0);
+}
+
+void ASSENTOS() {
+    int opcao;
+    int codigoVoo = 0, numeroAssento = 0;
+    Assento assentos[MAX_CODIGOS];
+    int total_assentos = 0;
+
+    do {
+        printf("\tCadastro de Assentos\n");
+        printf("\n");
+        printf("1 - Cadastrar assento\n");
+        printf("2 - Lista de assentos por voo\n");
+        printf("3 - Verificar disponibilidade de assento\n");
+        printf("4 - Deletar assento\n");
+        printf("0 - Voltar ao menu principal\n");
+        printf("\nEscolha uma das opções (Entre 0 e 4): ");
+        scanf("%d", &opcao);
+        printf("\n");
+
+        while (getchar() != '\n'); // Limpar buffer de entrada
+
+        int continuar = 1;
+        switch (opcao) {
+        case 0:
+            break;
+        case 1:
+            while (continuar && total_assentos < MAX_CODIGOS) {
+                CadastroAssento(&assentos[total_assentos]);
+                SalvarAssento(&assentos[total_assentos]);
+                total_assentos++;
+
+                printf("\nDeseja cadastrar outro assento? (1 - Sim / 0 - Não): ");
+                scanf("%d", &continuar);
+                printf("\n");
+                getchar();
+            }
+            break;
+        case 2:
+            printf("Digite o código do voo: ");
+            scanf("%d", &codigoVoo);
+            ListarAssentosPorVoo(codigoVoo);
+            break;
+        case 3:
+            printf("Digite o código do voo: ");
+            scanf("%d", &codigoVoo);
+            printf("Digite o número do assento: ");
+            scanf("%d", &numeroAssento);
+            if (VerificarDisponibilidade(codigoVoo, numeroAssento)) {
+                printf("Assento disponível.\n");
+            } else {
+                printf("Assento ocupado ou inexistente.\n");
+            }
+            break;
+        case 4:
+            printf("Digite o número do assento a ser excluído: ");
+            scanf("%d", &numeroAssento);
+            ExcluirAssento(numeroAssento);
+            break;
+        default:
+            printf("\nNúmero inválido, selecione novamente!\n");
+            break;
+        }
+    } while (opcao != 0);
+}
 
 /*-----------------------------------------------------------------MAIN--------------------------------------------------------------------------*/
 
@@ -1019,7 +1138,7 @@ int main() {
             TRIPULANTES();
             break;
         case 2:
-            //PASSAGEIROS();
+            PASSAGEIROS();
             break;
         case 3:
             VOOS();
@@ -1029,6 +1148,9 @@ int main() {
             break;
         case 5:
             //FIDELIDADE();
+            break;
+            case 6:
+            ASSENTOS();
             break;
         default:
             printf("\nNumero invalido, selecione novamente!\n");
