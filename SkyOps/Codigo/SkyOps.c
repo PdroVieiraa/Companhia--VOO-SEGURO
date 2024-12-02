@@ -9,9 +9,6 @@
 #define ARQUIVO_VOOS "voos.bin"
 #define MAX_CODIGOS 100
 #define ARQUIVO_BINARIO "tripulantes.bin"
-#define MAX 200
-#define MIN_TEMPO 1000
-#define MAX_TEMPO 5000
 
 typedef struct {
     char nome[100];    // Nome do tripulante
@@ -32,28 +29,16 @@ typedef struct {
     char aviao[50];
 } Voo;
 
-typedef struct {
-    int codigo;           
-    char nome[100];       
-    char endereco[150];
-    char telefone[20];
-    int fidelidade;       
-    int pontos;           
-} Passageiro;
 
-typedef struct {
-    int numero;
-    int codigoVoo;
-    int status;
-} Assento;
 
-typedef struct{
-    char *origemdoaviao; //deixar como padrao tudo minusculo
-    char *destinodoaviao; //deixar como padrao tudo minusculo
-    int assentos[2][MAX]; //1 ocupado e 0 desocupado
-    int numAviao;
-    Assentos informacaoAssento[MAX];
-}Informacao;
+Voo voos[MAX_VOOS];
+int total_voos = 0;
+
+Tripulantes tripulantes[MAX_CODIGOS];
+char *codigos_gerados[MAX_CODIGOS];
+int num_codigos = 0;
+int total_tripulantes = 0;
+
 
 /*---------------------------------------------------Ferramentas--------------------------------------------------------------*/
 
@@ -75,14 +60,6 @@ void ConverterPrimeiraMaiuscula(char *str) {
 }
 
 /*---------------------------------------------------TRIPULANTES---------------------------------------------------------------*/
-
-Voo voos[MAX_VOOS];
-int total_voos = 0;
-
-Tripulantes tripulantes[MAX_CODIGOS];
-char *codigos_gerados[MAX_CODIGOS];
-int num_codigos = 0;
-int total_tripulantes = 0;
 
 char *GerarNovoCodigo(void) {
     srand(time(NULL));  // Inicializa a semente do gerador de números aleatórios
@@ -634,6 +611,141 @@ void listarVoos() {
     }
 }
 
+void buscarVoo() {
+    if (total_voos == 0) {
+        printf("Nenhum voo cadastrado.\n");
+        return;
+    }
+
+    int criterio;
+    printf("Escolha o critério de busca:\n");
+    printf("1 - Buscar por código do voo\n");
+    printf("2 - Buscar por nome do piloto\n");
+    printf("3 - Buscar por número do voo\n");
+    printf("Escolha uma opção: ");
+    scanf("%d", &criterio);
+    getchar();  // Limpar o buffer
+
+    int encontrado = 0;
+    switch (criterio) {
+        case 1: {  // Buscar por código do voo
+            char codigoBusca[10];
+            printf("Digite o código do voo: ");
+            fgets(codigoBusca, sizeof(codigoBusca), stdin);
+            codigoBusca[strcspn(codigoBusca, "\n")] = '\0';  // Remover newline
+
+            for (int i = 0; i < total_voos; i++) {
+                if (strcmp(voos[i].codigo, codigoBusca) == 0) {
+                    printf("\nVoo encontrado:\n");
+                    printf("\nVoo %d:\n", i + 1);
+                    printf("Código: %s\n", voos[i].codigo);
+                    printf("\n-----------------------------\n");
+                    printf("Data: %s\n", voos[i].data);
+                    printf("\n-----------------------------\n");
+                    printf("Hora: %s\n", voos[i].hora);
+                    printf("\n-----------------------------\n");
+                    printf("Origem: %s\n", voos[i].origem);
+                    printf("\n-----------------------------\n");
+                    printf("Destino: %s\n", voos[i].destino);
+                    printf("\n-----------------------------\n");
+                    printf("Tarifa: %.2f\n", voos[i].tarifa);
+                    printf("\n-----------------------------\n");
+                    printf("Avião: %s\n", voos[i].aviao);
+                    printf("\n-----------------------------\n");
+                    printf("Tripulação:\n");
+                    for (int j = 0; j < voos[i].qtd_tripulacao; j++) {
+                        printf("Nome: %s\nFunção: %s\n", voos[i].tripulacao[j].nome, voos[i].tripulacao[j].cargo);
+                    }
+                    printf("-----------------------------\n");
+                    }
+                    encontrado = 1;
+                    break;
+                }
+            }
+            break;
+        case 2: {  // Buscar por nome do piloto
+            char nomePiloto[100];
+            printf("Digite o nome do piloto: ");
+            fgets(nomePiloto, sizeof(nomePiloto), stdin);
+            nomePiloto[strcspn(nomePiloto, "\n")] = '\0';  // Remover newline
+
+            for (int i = 0; i < total_voos; i++) {
+                for (int j = 0; j < voos[i].qtd_tripulacao; j++) {
+                    if (strcmp(voos[i].tripulacao[j].nome, nomePiloto) == 0 &&
+                        strcmp(voos[i].tripulacao[j].cargo, "Piloto(a)") == 0) {
+                        printf("\nVoo encontrado:\n");
+                        printf("\nVoo %d:\n", i + 1);
+                        printf("Código: %s\n", voos[i].codigo);
+                        printf("\n-----------------------------\n");
+                        printf("Data: %s\n", voos[i].data);
+                        printf("\n-----------------------------\n");
+                        printf("Hora: %s\n", voos[i].hora);
+                        printf("\n-----------------------------\n");
+                        printf("Origem: %s\n", voos[i].origem);
+                        printf("\n-----------------------------\n");
+                        printf("Destino: %s\n", voos[i].destino);
+                        printf("\n-----------------------------\n");
+                        printf("Tarifa: %.2f\n", voos[i].tarifa);
+                        printf("\n-----------------------------\n");
+                        printf("Avião: %s\n", voos[i].aviao);
+                        printf("\n-----------------------------\n");
+                        printf("Tripulação:\n");
+                        for (int j = 0; j < voos[i].qtd_tripulacao; j++) {
+                        printf("Nome: %s\nFunção: %s\n", voos[i].tripulacao[j].nome, voos[i].tripulacao[j].cargo);
+                    }
+                    printf("-----------------------------\n");
+                        encontrado = 1;
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        case 3: {  // Buscar por número do voo
+    int numeroVoo;
+    printf("Digite o número do voo (1 a %d): ", total_voos);
+    scanf("%d", &numeroVoo);
+    getchar();
+
+    if (numeroVoo > 0 && numeroVoo <= total_voos) {
+        Voo *voo = &voos[numeroVoo - 1];
+        printf("\nVoo encontrado:\n");
+        printf("\nVoo %d:\n", numeroVoo);
+        printf("Código: %s\n", voo->codigo);
+        printf("\n-----------------------------\n");
+        printf("Data: %s\n", voo->data);
+        printf("\n-----------------------------\n");
+        printf("Hora: %s\n", voo->hora);
+        printf("\n-----------------------------\n");
+        printf("Origem: %s\n", voo->origem);
+        printf("\n-----------------------------\n");
+        printf("Destino: %s\n", voo->destino);
+        printf("\n-----------------------------\n");
+        printf("Tarifa: %.2f\n", voo->tarifa);
+        printf("\n-----------------------------\n");
+        printf("Avião: %s\n", voo->aviao);
+        printf("\n-----------------------------\n");
+        printf("Tripulação:\n");
+        for (int j = 0; j < voo->qtd_tripulacao; j++) {
+            printf("Nome: %s\nFunção: %s\n", voo->tripulacao[j].nome, voo->tripulacao[j].cargo);
+        }
+        printf("-----------------------------\n");
+        encontrado = 1;
+    } else {
+        printf("Número do voo inválido.\n");
+    }
+    break;
+}
+        default:
+            printf("Opção inválida.\n");
+            return;
+    }
+
+    if (!encontrado) {
+        printf("Voo não encontrado.\n");
+    }
+}
+
 /*-----------------------------------------------------------Funções unidads---------------------------------------------------------------------*/
 
 void TRIPULANTES(){
@@ -704,7 +816,8 @@ void VOOS() {
         printf("\n--- Sistema de Cadastro de Voos ---\n");
         printf("1. Adicionar voo\n");
         printf("2. Listar voos\n");
-        printf("3. Sair\n");
+        printf("3. Buscar voos\n");
+        printf("0. Sair\n");
         printf("Escolha uma opção: ");
         scanf("%d", &opcao);
 
@@ -716,6 +829,9 @@ void VOOS() {
                 listarVoos();
                 break;
             case 3:
+                buscarVoo();
+                break;
+            case 0:
                 salvarVoos();
                 printf("Saindo...\n");
                 break;
