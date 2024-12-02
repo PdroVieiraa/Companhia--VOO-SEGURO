@@ -746,104 +746,6 @@ void buscarVoo() {
     }
 }
 
-/*-----------------------------------------------------------Funções unidads---------------------------------------------------------------------*/
-
-void TRIPULANTES(){
-
-
-
-    int opcao;
-    int codigo = 0;
-    Tripulantes tripulantes[MAX_CODIGOS];
-    int total_tripulantes = 0;
-
-    do
-    {    
-        printf("\tTripulantes\n");
-        printf("\n");
-        printf("1 - Cadastrar tripulante\n");
-        printf("2 - Lista de tripulantes\n");
-        printf("3 - Buscar tripulantes\n");
-        printf("4 - Deletar tripulante\n");
-        printf("0 - Voltar ao menu principal\n");
-        printf("\n");
-         printf("\nEscolha uma das opcoes (Entre 0 e 4): ");
-        scanf("%d", &opcao);
-        printf("\n");
-
-        while (getchar() != '\n');
-
-        int continuar = 1;
-        switch (opcao)
-        {
-        case 0:
-            break;
-        case 1:
-           while (continuar && total_tripulantes < MAX_CODIGOS) {
-        CadastroTripulantes(&tripulantes);
-        SalvarTripulante(&tripulantes);
-        total_tripulantes++;
-
-        printf("\nDeseja cadastrar outro tripulante? (1 - Sim / 0 - Não): ");
-        scanf("%d", &continuar);
-        printf("\n");
-        getchar();
-    } break;
-        case 2:
-        LerTripulantes();
-            break;
-        case 3:
-        BuscarTripulante();
-            break;
-        case 4:
-            printf("Digite o código do tripulante a ser excluído: ");
-            scanf("%d", &codigo);
-            ExcluirTripulante(codigo); 
-            break;
-        default:
-        printf("\nNumero invalido, selecione novamente!\n");
-            break;
-        }
-    } while (opcao != 0);
-}
-
-void VOOS() {
-    carregarVoos(); // Carregar os dados do arquivo ao iniciar o programa
-
-    int opcao;
-
-    do {
-        printf("\n--- Sistema de Cadastro de Voos ---\n");
-        printf("1. Adicionar voo\n");
-        printf("2. Listar voos\n");
-        printf("3. Buscar voos\n");
-        printf("0. Sair\n");
-        printf("Escolha uma opção: ");
-        scanf("%d", &opcao);
-
-        switch (opcao) {
-            case 1:
-                adicionarVoo();
-                break;
-            case 2:
-                listarVoos();
-                break;
-            case 3:
-                buscarVoo();
-                break;
-            case 0:
-                salvarVoos();
-                printf("Saindo...\n");
-                break;
-            default:
-                printf("Opção inválida!\n");
-        }
-    } while (opcao != 3);
-
-    return 0;
-}
-
-
 /*-----------------------------------------------------------------CADASTRO PASSAGEIROS------------------------------------------------------------------------*/
 
 
@@ -981,6 +883,104 @@ void salvarAssentosEmArquivo() {
 // Função para carregar os dados dos assentos de um arquivo binário
 void carregarAssentosDeArquivo() {
     printf("Os dados dos assentos são carregados diretamente ao abrir o sistema.\n");
+}
+
+
+/*-----------------------------------------------------------Funções unidads---------------------------------------------------------------------*/
+
+void TRIPULANTES(){
+
+
+
+    int opcao;
+    int codigo = 0;
+    Tripulantes tripulantes[MAX_CODIGOS];
+    int total_tripulantes = 0;
+
+    do
+    {    
+        printf("\tTripulantes\n");
+        printf("\n");
+        printf("1 - Cadastrar tripulante\n");
+        printf("2 - Lista de tripulantes\n");
+        printf("3 - Buscar tripulantes\n");
+        printf("4 - Deletar tripulante\n");
+        printf("0 - Voltar ao menu principal\n");
+        printf("\n");
+         printf("\nEscolha uma das opcoes (Entre 0 e 4): ");
+        scanf("%d", &opcao);
+        printf("\n");
+
+        while (getchar() != '\n');
+
+        int continuar = 1;
+        switch (opcao)
+        {
+        case 0:
+            break;
+        case 1:
+           while (continuar && total_tripulantes < MAX_CODIGOS) {
+        CadastroTripulantes(&tripulantes);
+        SalvarTripulante(&tripulantes);
+        total_tripulantes++;
+
+        printf("\nDeseja cadastrar outro tripulante? (1 - Sim / 0 - Não): ");
+        scanf("%d", &continuar);
+        printf("\n");
+        getchar();
+    } break;
+        case 2:
+        LerTripulantes();
+            break;
+        case 3:
+        BuscarTripulante();
+            break;
+        case 4:
+            printf("Digite o código do tripulante a ser excluído: ");
+            scanf("%d", &codigo);
+            ExcluirTripulante(codigo); 
+            break;
+        default:
+        printf("\nNumero invalido, selecione novamente!\n");
+            break;
+        }
+    } while (opcao != 0);
+}
+
+void VOOS() {
+    carregarVoos(); // Carregar os dados do arquivo ao iniciar o programa
+
+    int opcao;
+
+    do {
+        printf("\n--- Sistema de Cadastro de Voos ---\n");
+        printf("1. Adicionar voo\n");
+        printf("2. Listar voos\n");
+        printf("3. Buscar voos\n");
+        printf("0. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                adicionarVoo();
+                break;
+            case 2:
+                listarVoos();
+                break;
+            case 3:
+                buscarVoo();
+                break;
+            case 0:
+                salvarVoos();
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opção inválida!\n");
+        }
+    } while (opcao != 3);
+
+    return 0;
 }
 
 
