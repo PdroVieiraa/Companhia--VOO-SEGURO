@@ -3,67 +3,57 @@
 #include <string.h>
 #include <ctype.h>
 
-#define MAX_USUARIOS 100
-#define ARQUIVO_FIDELIDADE "fidelidade.bin"
+#define MAX_PASSAGEIROS 100
+#define ARQUIVO_FIDELIDADE "fidelidade_manual.bin"
 
-// Estrutura para armazenar dados do usuário
+// Estrutura para armazenar os dados do passageiro
 typedef struct {
     char id[20];
     char nome[50];
-    int pontos; // Pontos de fidelidade
-} Usuario;
+    int pontos;
+} Passageiro;
 
-Usuario usuarios[MAX_USUARIOS];
-int total_usuarios = 0;
+Passageiro passageiros[MAX_PASSAGEIROS];
+int total_passageiros = 0;
 
 // Função para carregar os dados do arquivo
-void carregarUsuarios() {
+void carregarPassageiros() {
     FILE *arquivo = fopen(ARQUIVO_FIDELIDADE, "rb");
     if (!arquivo) {
         printf("Nenhum arquivo de fidelidade encontrado. Iniciando sistema vazio.\n");
         return;
     }
-    fread(&total_usuarios, sizeof(int), 1, arquivo);
-    fread(usuarios, sizeof(Usuario), total_usuarios, arquivo);
+    fread(&total_passageiros, sizeof(int), 1, arquivo);
+    fread(passageiros, sizeof(Passageiro), total_passageiros, arquivo);
     fclose(arquivo);
     printf("Dados de fidelidade carregados com sucesso!\n");
 }
 
 // Função para salvar os dados no arquivo
-void salvarUsuarios() {
+void salvarPassageiros() {
     FILE *arquivo = fopen(ARQUIVO_FIDELIDADE, "wb");
     if (!arquivo) {
         perror("Erro ao abrir o arquivo para salvar os dados");
         return;
     }
-    fwrite(&total_usuarios, sizeof(int), 1, arquivo);
-    fwrite(usuarios, sizeof(Usuario), total_usuarios, arquivo);
+    fwrite(&total_passageiros, sizeof(int), 1, arquivo);
+    fwrite(passageiros, sizeof(Passageiro), total_passageiros, arquivo);
     fclose(arquivo);
     printf("Dados de fidelidade salvos com sucesso!\n");
 }
 
-// Função para verificar se um ID já existe
-int idJaExiste(const char *id) {
-    for (int i = 0; i < total_usuarios; i++) {
-        if (strcmp(usuarios[i].id, id) == 0) {
-            return i; // Retorna o índice do usuário encontrado
+// Função para verificar se o código único já existe
+int buscarPassageiro(const char *id) {
+    for (int i = 0; i < total_passageiros; i++) {
+        if (strcmp(passageiros[i].id, id) == 0) {
+            return i; // Retorna o índice do passageiro
         }
     }
     return -1; // Não encontrado
 }
 
-// Função para validar o nome (somente letras e espaços)
-int validarNome(const char *nome) {
-    for (int i = 0; nome[i] != '\0'; i++) {
-        if (!isalpha(nome[i]) && nome[i] != ' ') {
-            return 0; // Caracter inválido encontrado
-        }
-    }
-    return 1; // Nome válido
-}
-
-// Função para validar o ID (somente números)
-int validarId(const char *id) {
+// Função para validar se o código único é numérico
+int validarIdNumerico(const char *id) {
     for (int i = 0; id[i] != '\0'; i++) {
         if (!isdigit(id[i])) {
             return 0; // Caracter inválido encontrado
@@ -72,106 +62,142 @@ int validarId(const char *id) {
     return 1; // ID válido
 }
 
-// Função para cadastrar um novo usuário
-void cadastrarUsuario() {
-    if (total_usuarios >= MAX_USUARIOS) {
-        printf("Limite de usuários atingido!\n");
-        return;
-    }
-
-    Usuario novoUsuario;
+// Função para registrar pontos para um passageiro
+void registrarPontos() {
+    char id[20], nome[50];
 
     do {
-        printf("Digite o ID único do usuário (somente números): ");
-        scanf("%s", novoUsuario.id);
-        if (!validarId(novoUsuario.id)) {
-            printf("ID inválido! Use apenas números.\n");
-            continue;
+        printf("Digite o código único do passageiro (somente números): ");
+        scanf("%s", id);
+        if (!validarIdNumerico(id)) {
+            printf("Código inválido! Use apenas números.\n");
         }
-        if (idJaExiste(novoUsuario.id) != -1) {
-            printf("ID já existe! Por favor, insira um ID único.\n");
+    } while (!validarIdNumerico(id));
+
+    int indice = buscarPassageiro(id);
+
+    if (indice != -1) {
+        // Passageiro já existe, adiciona pontos
+        passageiros[indice].pontos += 10;
+        printf("10 pontos adicionados para o passageiro %s (%s).\n", passageiros[indice].nome, passageiros[indice].id);
+    } else {
+        // Novo passageiro, cria registro
+        if (total_passageiros >= MAX_PASSAGEIROS) {
+            printf("Limite de passageiros atingido!\n");
+            return;
         }
-    } while (!validarId(novoUsuario.id) || idJaExiste(novoUsuario.id) != -1);
 
-    do {
-        printf("Digite o nome do usuário (somente letras): ");
-        scanf(" %[^\n]", novoUsuario.nome);
-        if (!validarNome(novoUsuario.nome)) {
-            printf("Nome inválido! Use apenas letras e espaços.\n");
-        }
-    } while (!validarNome(novoUsuario.nome));
+        printf("Digite o nome do passageiro: ");
+        scanf(" %[^\n]", nome);
 
-    novoUsuario.pontos = 0; // Inicializa com 0 pontos
-    usuarios[total_usuarios++] = novoUsuario;
+        strcpy(passageiros[total_passageiros].id, id);
+        strcpy(passageiros[total_passageiros].nome, nome);
+        passageiros[total_passageiros].pontos = 10;
+        total_passageiros++;
 
-    printf("Usuário cadastrado com sucesso!\n");
-    salvarUsuarios(); // Salvar dados atualizados
-}
-
-// Função para adicionar pontos fidelidade
-void adicionarPontos() {
-    char id[20];
-    printf("Digite o ID do usuário: ");
-    scanf("%s", id);
-
-    int indice = idJaExiste(id);
-    if (indice == -1) {
-        printf("Usuário não encontrado!\n");
-        return;
+        printf("Novo passageiro cadastrado com 10 pontos: %s (%s).\n", nome, id);
     }
 
-    usuarios[indice].pontos += 10; // Adiciona 10 pontos
-    printf("10 pontos adicionados ao usuário %s (%s).\n", usuarios[indice].nome, usuarios[indice].id);
-    salvarUsuarios(); // Salvar dados atualizados
+    salvarPassageiros(); // Salvar alterações no arquivo
 }
 
-// Função para consultar pontos de fidelidade
+// Função para consultar os pontos de um passageiro
 void consultarPontos() {
     char id[20];
-    printf("Digite o ID do usuário: ");
+
+    printf("Digite o código único do passageiro: ");
     scanf("%s", id);
 
-    int indice = idJaExiste(id);
-    if (indice == -1) {
-        printf("Usuário não encontrado!\n");
-        return;
-    }
+    int indice = buscarPassageiro(id);
 
-    printf("Usuário: %s (%s)\n", usuarios[indice].nome, usuarios[indice].id);
-    printf("Pontos acumulados: %d\n", usuarios[indice].pontos);
+    if (indice != -1) {
+        printf("Passageiro: %s (%s)\n", passageiros[indice].nome, passageiros[indice].id);
+        printf("Pontos acumulados: %d\n", passageiros[indice].pontos);
+    } else {
+        printf("Passageiro não encontrado!\n");
+    }
+}
+
+// Função para remover pontos de um passageiro
+void removerPontos() {
+    char id[20];
+    int pontosARemover;
+
+    printf("Digite o código único do passageiro: ");
+    scanf("%s", id);
+
+    int indice = buscarPassageiro(id);
+
+    if (indice != -1) {
+        printf("Passageiro encontrado: %s (%s)\n", passageiros[indice].nome, passageiros[indice].id);
+        printf("Pontos atuais: %d\n", passageiros[indice].pontos);
+
+        do {
+            printf("Digite o número de pontos a remover: ");
+            scanf("%d", &pontosARemover);
+
+            if (pontosARemover < 0) {
+                printf("Você não pode remover uma quantidade negativa de pontos.\n");
+            } else if (pontosARemover > passageiros[indice].pontos) {
+                printf("Quantidade de pontos a remover excede os pontos disponíveis.\n");
+            }
+        } while (pontosARemover < 0 || pontosARemover > passageiros[indice].pontos);
+
+        passageiros[indice].pontos -= pontosARemover;
+        printf("%d pontos removidos. Pontos restantes: %d\n", pontosARemover, passageiros[indice].pontos);
+
+        salvarPassageiros(); // Salvar alterações no arquivo
+    } else {
+        printf("Passageiro não encontrado!\n");
+    }
+}
+
+// Função para validar a entrada do menu principal
+int lerOpcaoMenu() {
+    char entrada[10];
+    int opcao;
+    do {
+        printf("\n--- Programa de Fidelidade Manual ---\n");
+        printf("1. Registrar pontos\n");
+        printf("2. Consultar pontos\n");
+        printf("3. Remover pontos\n");
+        printf("4. Sair\n");
+        printf("Escolha uma opção: ");
+        scanf("%s", entrada);
+
+        if (strlen(entrada) == 1 && isdigit(entrada[0])) {
+            opcao = entrada[0] - '0'; // Converte o caractere para inteiro
+            if (opcao >= 1 && opcao <= 4) {
+                return opcao; // Retorna a opção válida
+            }
+        }
+        printf("Opção inválida! Por favor, escolha uma opção entre 1 e 4.\n");
+    } while (1);
 }
 
 // Menu principal
 int main() {
-    carregarUsuarios(); // Carregar os dados ao iniciar o programa
+    carregarPassageiros();
 
     int opcao;
 
     do {
-        printf("\n--- Programa de Fidelidade ---\n");
-        printf("1. Cadastrar usuário\n");
-        printf("2. Adicionar pontos\n");
-        printf("3. Consultar pontos\n");
-        printf("4. Sair\n");
-        printf("Escolha uma opção: ");
-        scanf("%d", &opcao);
+        opcao = lerOpcaoMenu();
 
         switch (opcao) {
             case 1:
-                cadastrarUsuario();
+                registrarPontos();
                 break;
             case 2:
-                adicionarPontos();
-                break;
-            case 3:
                 consultarPontos();
                 break;
+            case 3:
+                removerPontos();
+                break;
             case 4:
-                salvarUsuarios();
+                salvarPassageiros();
                 printf("Saindo...\n");
                 break;
-            default:
-                printf("Opção inválida!\n");
         }
     } while (opcao != 4);
 
