@@ -3,6 +3,7 @@
 #include <string.h>
 #include <locale.h>
 #include <ctype.h>
+#include <time.h>
 
 
 #define MAX 200
@@ -11,6 +12,8 @@
 #define MAX_VOOS 100
 #define MAX_VOOS 100
 #define MAX_TRIPULACAO 5
+#define MAX_LINHAS 100   
+#define MAX_COLUNAS 10   
 #define MAX_CODIGOS 100
 #define MAX_PASSAGEIROS 100
 #define MAX_PASSAGEIROS 100
@@ -26,6 +29,12 @@ typedef struct {
     char cargo[20];   // Cargo do tripulante (piloto, copiloto, comissário)
 } Tripulantes;
 
+
+typedef struct {
+    int ocupado;          // 0 = livre, 1 = ocupado
+    char passageiro[50];  // Nome do passageiro, se ocupado
+} Assento;
+
 typedef struct {
     char codigo[10];
     char data[11];    // Formato: DD/MM/AAAA
@@ -36,27 +45,27 @@ typedef struct {
     Tripulantes tripulacao[MAX_TRIPULACAO];
     int qtd_tripulacao;
     char aviao[50];
+    
+    Assento assentosVoo[MAX_LINHAS][MAX_COLUNAS];
+    int linhas;   
+    int colunas;
 } Voo;
 
 typedef struct {
     int codigo;           
     char nome[100];       
     char endereco[150];
-    char telefone[20];
-    int fidelidade;       
+    char telefone[20]; 
+    int fidelidade;     
     int pontos;           
 } Passageiro;
-
-typedef struct {
-    Passageiro *passageirros;
-} Fidelidade;
 
 typedef struct {
     int numero;
     Voo codigoVoo;
     int status; // 0 = desocupado, 1 = ocupado
     Passageiro nomePassageiro[MAX]; // PUXAR O NOME PELA STRUCT "Passageiro" = nomePassageiro.nome
-} Assento;
+} reserva;
 
 typedef struct {
     Voo origem[MAX];  // Strings fixas origem.origem
@@ -340,6 +349,122 @@ void BuscarTripulante() {
 
 /*-------------------------------------------------------------CADASTRO ASSENTOS------------------------------------------------------------------------*/
 
+void inicializarAssentos(Voo *voo) {
+    for (int i = 0; i < voo->linhas; i++) {
+        for (int j = 0; j < voo->colunas; j++) {
+            voo->assentosVoo[i][j].ocupado = 0;
+            strcpy(voo->assentosVoo[i][j].passageiro, "");
+        }
+    }
+}
+
+void exibirAssentos(Voo *voo) {
+
+
+    int linhas = voo->linhas;
+    int colunas = voo->colunas;
+
+    if (voo == NULL) {
+        printf("Erro: Voo não encontrado.\n");
+        return;
+    }
+
+    printf("Mapa de Assentos do Voo %s:\n\n", voo->codigo);
+    
+    // Verifica se as linhas e colunas são válidas
+    if (linhas <= 0 || colunas <= 0) {
+        printf("Erro: Linhas ou colunas inválidas.\n");
+        return;
+    }
+
+    // Exibe os cabeçalhos das colunas (A, B, C, etc.)
+    printf("    ");
+    for (char c = 'A'; c < 'A' + colunas; c++) {
+        printf("%c ", c);  // Exibe o nome da coluna
+    }
+    printf("\n");
+
+    // Exibe as linhas de assentos
+    for (int i = 0; i < linhas; i++) {
+        printf("%2d |", i + 1);  // Exibe o número da linha
+        for (int j = 0; j < colunas; j++) {
+            printf(" %d ", voo->assentosVoo[i][j].ocupado);  // Exibe se o assento está ocupado (1) ou não (0)
+        }
+        printf("\n");
+    }
+}
+
+int ocuparAssento(Voo *voo, int fileira, char coluna, char *nomePassageiro) {
+    int colIdx = coluna - 'A';
+    if (fileira < 1 || fileira > voo->linhas || colIdx < 0 || colIdx >= voo->colunas) {
+        printf("Assento inválido!\n");
+        return 0;
+    }
+
+    Assento *assento = &voo->assentosVoo[fileira - 1][colIdx];
+    if (assento->ocupado) {
+        printf("Assento %d%c já está ocupado por %s!\n", fileira, coluna, assento->passageiro);
+        return 0;
+    }
+
+    assento->ocupado = 1;
+    strcpy(assento->passageiro, nomePassageiro);
+    printf("Assento %d%c ocupado com sucesso por %s!\n", fileira, coluna, nomePassageiro);
+    return 1;
+}
+
+int colunaParaIndice(char coluna, int colunas) {
+    if (coluna >= 'A' && coluna < 'A' + colunas) {
+        return coluna - 'A';
+    } else if (coluna >= 'a' && coluna < 'a' + colunas) {
+        return coluna - 'a';
+    }
+    return -1; // Letra inválida
+}
+
+void selecionarAssento(Voo *meuVoo) {
+    int opcao, fileira;
+    char coluna;
+    Passageiro nomePassageiro;
+
+    if (meuVoo == NULL) {
+        printf("Erro: Voo não encontrado.\n");
+        return;
+    }
+
+    printf("Linhas: %d\n", meuVoo->linhas);
+    printf("Colunas: %d\n", meuVoo->colunas);
+
+    do {
+        printf("\n1. Exibir mapa de assentos\n");
+        printf("2. Ocupar um assento\n");
+        printf("0. Sair\n");
+        printf("Opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                exibirAssentos(meuVoo);
+                break;
+            case 2:
+                printf("Digite a fileira (1-%d): ", meuVoo->linhas);
+                scanf("%d", &fileira);
+                printf("Digite a coluna (A-%c): ", 'A' + meuVoo->colunas - 1);
+                scanf(" %c", &coluna);
+                printf("Digite o nome do passageiro: ");
+                scanf(" %[^\n]", nomePassageiro.nome);
+                ocuparAssento(meuVoo, fileira, coluna, nomePassageiro.nome);
+                printf("Assento ocupado!\n");
+                break;
+            case 0:
+                printf("Encerrando...\n");
+                break;
+            default:
+                printf("Opção inválida!\n");
+        }
+    } while (opcao != 0);
+}
+
 
 /*------------------------------------------------------------------VOOS--------------------------------------------------------------------------*/
 
@@ -453,10 +578,12 @@ void adicionarVoo() {
     printf("-----------------------------\n");
     printf("-Origem: ");
     scanf(" %[^\n]", novoVoo.origem);
+    strupr(novoVoo.origem); 
 
     printf("-----------------------------\n");
     printf("-Destino: ");
     scanf(" %[^\n]", novoVoo.destino);
+    strupr(novoVoo.destino); 
 
     char tarifa_str[20];
     do {
@@ -471,6 +598,13 @@ void adicionarVoo() {
     printf("-----------------------------\n");
     printf("-Informe o nome do avião: ");
     scanf(" %[^\n]", novoVoo.aviao);
+
+    printf("Digite a quantidade de fileiras no avião:");
+    scanf("%d", &novoVoo.linhas);
+    printf("\nDigite a quantidade de assentos por fileira (A-F):");
+    scanf("%d", &novoVoo.colunas);
+
+    inicializarAssentos(&novoVoo);
 
     // Adicionar tripulação
     novoVoo.qtd_tripulacao = 0;
@@ -497,7 +631,6 @@ void adicionarVoo() {
         FILE *arquivo = fopen("tripulantes.bin", "rb");
         if (arquivo == NULL) {
             perror("Erro ao abrir o arquivo");
-            return 1;
         }
 
         while (fread(&tripulante, sizeof(Tripulantes), 1, arquivo) == 1) {
@@ -529,7 +662,6 @@ void adicionarVoo() {
                 FILE *arquivo = fopen("tripulantes.bin", "rb");
                 if (arquivo == NULL) {
                     perror("Erro ao abrir o arquivo");
-                    return 1;
                 }
 
                 encontrado = 0;
@@ -570,7 +702,6 @@ void adicionarVoo() {
             case 0:
                 // Cancelar
                 printf("Cancelando...\n");
-                return 0;
 
             default:
                 printf("Opção inválida! Tente novamente.\n");
@@ -591,7 +722,6 @@ void adicionarVoo() {
         FILE* arquivo = fopen("tripulantes.bin", "rb");
         if (arquivo == NULL) {
             perror("Erro ao abrir o arquivo");
-            return 1;
         }
 
         encontrado = 0;
@@ -617,7 +747,6 @@ void adicionarVoo() {
 
     printf("-----------------------------\n");
     salvarVoos(); // Salvar os dados atualizados
-    return 0;
 }
 
 // Função para listar todos os voos
@@ -648,6 +777,10 @@ void listarVoos() {
         for (int j = 0; j < voos[i].qtd_tripulacao; j++) {
             printf("Nome: %s\nFunção: %s\n", voos[i].tripulacao[j].nome, voos[i].tripulacao[j].cargo);
         }
+        printf("-----------------------------\n");
+        int capacidadeTotal = voos[i].linhas * voos[i].colunas;
+        printf("%d linhas %d colunas", voos[i].linhas,voos[i].colunas);
+        printf("\nCapacidade total do avião: %d assentos\n", capacidadeTotal);
         printf("-----------------------------\n");
     }
 }
@@ -799,6 +932,7 @@ int verificaCodigoPassageiro(int codigo) {
     }
 
     // Verificar no arquivo binário
+    setlocale(LC_ALL, "Portuguese_Brazil.1252");
     FILE *arquivo = fopen(ARQUIVO_PASSAGEIROS, "rb");
     if (arquivo == NULL) {
         return 0; // Arquivo não existe, código não encontrado
@@ -835,28 +969,34 @@ void cadastrarPassageiro() {
 
     Passageiro novo_passageiro;
 
+
     printf("Cadastro de passageiro\n\n");
+
     // Leitura do código
     do {
         printf("Digite o código do passageiro: ");
-        scanf("%d", &novo_passageiro.codigo);
-
+        if (scanf("%d", &novo_passageiro.codigo) != 1) {
+            printf("Entrada inválida! Por favor, insira um número.\n");
+            while (getchar() != '\n');  // Limpa buffer em caso de entrada inválida
+            continue;
+        }
         if (verificaCodigoPassageiro(novo_passageiro.codigo)) {
             printf("Código já existe! Por favor, insira um código único.\n");
         }
     } while (verificaCodigoPassageiro(novo_passageiro.codigo));
 
-    // Limpar buffer
+    // Limpar buffer após leitura do código
     getchar();
 
-     printf("\n____________________________________\n");
+    printf("\n____________________________________\n");
+
     // Leitura dos outros campos
     printf("Digite o nome do passageiro: ");
     fgets(novo_passageiro.nome, sizeof(novo_passageiro.nome), stdin);
     novo_passageiro.nome[strcspn(novo_passageiro.nome, "\n")] = '\0';
     ConverterPrimeiraMaiuscula(novo_passageiro.nome);
-    
-     printf("\n____________________________________\n");
+    printf("%s\n", novo_passageiro.nome);
+    printf("\n____________________________________\n");
 
     printf("Digite o endereço do passageiro: ");
     fgets(novo_passageiro.endereco, sizeof(novo_passageiro.endereco), stdin);
@@ -870,16 +1010,16 @@ void cadastrarPassageiro() {
 
     printf("\n____________________________________\n");
 
-        novo_passageiro.pontos = 0;
-    
+    // Inicializa os pontos de fidelidade
+    novo_passageiro.pontos = 0;
 
     // Armazenar o passageiro no array
     passageiros[total_passageiros++] = novo_passageiro;
 
     // Salvar no arquivo binário
     salvarPassageiroNoArquivo(&novo_passageiro);
-    printf("\n");
-    printf("Passageiro cadastrado com sucesso!\n");
+
+    printf("\nPassageiro cadastrado com sucesso!\n");
 }
 
 void listarPassageiros() {
@@ -897,7 +1037,6 @@ void listarPassageiros() {
         printf("Nome: %s\n", passageiro.nome);
         printf("Endereço: %s\n", passageiro.endereco);
         printf("Telefone: %s\n", passageiro.telefone);
-        printf("Fidelidade: %s\n", passageiro.fidelidade ? "Sim" : "Não");
         printf("Pontos: %d\n", passageiro.pontos);
         printf("---------------------------------------------------------\n");
     }
@@ -981,111 +1120,181 @@ void buscarPassageiro() {
 
 /*----------------------------------------------------------------RESERVAS DE VOO-----------------------------------------------------------------------*/
 
+void salvarReservas() {
+    FILE *arquivo = fopen("reservas.bin", "wb");  // Abrir arquivo para escrita binária
 
-
-/*------------------------------------------------------------------FIDELIDADE---------------------------------------------------------------------*/
-
-void carregarPassageiros() {
-    FILE *arquivo = fopen(ARQUIVO_PASSAGEIROS, "rb");
     if (arquivo == NULL) {
-        printf("Nenhum arquivo de passageiros encontrado. Criando novo arquivo.\n");
+        printf("Erro ao abrir o arquivo para salvar as reservas.\n");
         return;
     }
 
-    total_passageiros = fread(passageiros, sizeof(Passageiro), MAX_PASSAGEIROS, arquivo);
+    // Salvar o total de voos
+    fwrite(&total_voos, sizeof(int), 1, arquivo);
+
+    // Salvar os voos
+    fwrite(voos, sizeof(Voo), total_voos, arquivo);
+
+    // Salvar o total de passageiros
+    fwrite(&total_passageiros, sizeof(int), 1, arquivo);
+
+    // Salvar os passageiros
+    fwrite(passageiros, sizeof(Passageiro), total_passageiros, arquivo);
+
     fclose(arquivo);
+    printf("Dados salvos com sucesso no arquivo reservas.bin!\n");
 }
 
-int buscarFidelidade(const char *id) {
-    for (int i = 0; i < total_passageiros; i++) {
-        char codigo_str[10];
-        sprintf(codigo_str, "%d", passageiros[i].codigo);
-        if (strcmp(codigo_str, id) == 0) {
-            return i; // Retorna o índice do passageiro
+void cadastrarReserva() {
+    char origem[50], destino[50];
+    int vooEncontrado = 0;
+    int indices[MAX]; // Para armazenar os índices dos voos encontrados
+
+    printf("\n-----------------------------\n");
+    printf("\tCadastro de Reserva:\n");
+
+    // Limpa o buffer antes de ler a origem
+    printf("\nInforme a ORIGEM da sua viagem: ");
+    fgets(origem, sizeof(origem), stdin);
+    origem[strcspn(origem, "\n")] = '\0';  // Remove o caractere de nova linha
+    for (int i = 0; origem[i] != '\0'; i++) {
+        origem[i] = toupper((unsigned char)origem[i]);
+    }
+
+    // Limpa o buffer antes de ler o destino
+    printf("Informe o DESTINO da sua viagem: ");
+    fgets(destino, sizeof(destino), stdin);
+    destino[strcspn(destino, "\n")] = '\0';  // Remove o caractere de nova linha
+    for (int i = 0; destino[i] != '\0'; i++) {
+        destino[i] = toupper((unsigned char)destino[i]);
+    }
+
+    printf("\n-----------------------------\n");
+
+    // Busca por voos que correspondem à origem e destino
+    for (int i = 0; i < total_voos; i++) {
+        if (strcmp(origem, voos[i].origem) == 0 && strcmp(destino, voos[i].destino) == 0) {
+            printf("Voo %d\nCódigo: %s\nData: %s - Hora: %s\nTarifa: %.2f\n",
+                   vooEncontrado + 1, voos[i].codigo, voos[i].data, voos[i].hora, voos[i].tarifa);
+            indices[vooEncontrado++] = i; // Armazena o índice do voo encontrado
+            printf("-----------------------------\n");
         }
     }
-    return -1; // Não encontrado
-}
 
-void registrarPontos() {
-
-    Passageiro passageiros_fidelidade;
-
-    do {
-        printf("Digite o código único do passageiro (somente números): ");
-        scanf("%s", passageiros_fidelidade.codigo);
-        if (!verificaCodigoPassageiro(passageiros_fidelidade.codigo)) {
-            printf("Código inválido! Use apenas números.\n");
-        }
-    } while (!verificaCodigoPassageiro(passageiros_fidelidade.codigo));
-
-    char codigo_str[10];
-    sprintf(codigo_str, "%d", passageiros_fidelidade.codigo);
-    int indice = buscarFidelidade(codigo_str);
-
-    if (indice != -1) {
-        passageiros[indice].pontos += 10;
-        printf("10 pontos adicionados para o passageiro %s (%d).\n", passageiros[indice].nome, passageiros[indice].codigo);
-
-        salvarPassageiroNoArquivo(&passageiros_fidelidade);
+    // Se nenhum voo foi encontrado
+    if (vooEncontrado == 0) {
+        printf("Nenhum voo encontrado de %s para %s.\n", origem, destino);
+        return;
     }
-}
 
-void consultarPontos() {
-    
-    Passageiro passageiros_fidelidade;
+    // Solicitar ao usuário para escolher um voo
+    int escolha;
+    printf("\nEscolha um dos voos listados (1 a %d): ", vooEncontrado);
+    scanf("%d", &escolha);
+    getchar(); // Limpa o buffer após o scanf
 
-    printf("Digite o código único do passageiro: ");
-    scanf("%s", passageiros_fidelidade.codigo);
-
-    char codigo_str[10];
-    sprintf(codigo_str, "%d", passageiros_fidelidade.codigo);
-    int indice = buscarFidelidade(codigo_str);
-
-    if (indice != -1) {
-        printf("Passageiro: %s (%s)\n", passageiros[indice].nome, passageiros[indice].codigo);
-        printf("Pontos acumulados: %d\n", passageiros[indice].pontos);
-    } else {
-        printf("Passageiro não encontrado!\n");
+    // Verificar se a escolha é válida
+    if (escolha < 1 || escolha > vooEncontrado) {
+        printf("\nEscolha inválida. Por favor, tente novamente.\n");
+        return;
     }
+
+    // Obter o índice do voo selecionado
+    int indiceVooSelecionado = indices[escolha - 1];
+
+    // Selecionar assento no voo escolhido
+    selecionarAssento(&voos[indiceVooSelecionado]);
 }
 
-void removerPontos() {
-    
-    Passageiro passageiros_fidelidade;
+void cancelarReserva() {
+    int codigoPassageiro;
+    printf("Digite o código do passageiro: ");
+    scanf("%d", &codigoPassageiro);
+    getchar();
 
-    int pontosARemover;
-
-    printf("Digite o código único do passageiro: ");
-    scanf("%s", passageiros_fidelidade.codigo);
-
-    char codigo_str[10];
-    sprintf(codigo_str, "%d", passageiros_fidelidade.codigo);
-    int indice = buscarFidelidade(codigo_str);
-
-    if (indice != -1) {
-        printf("Passageiro encontrado: %s (%s)\n", passageiros[indice].nome, passageiros[indice].codigo);
-        printf("Pontos atuais: %d\n", passageiros[indice].pontos);
-
-        do {
-            printf("Digite o número de pontos a remover: ");
-            scanf("%d", &pontosARemover);
-
-            if (pontosARemover < 0) {
-                printf("Você não pode remover uma quantidade negativa de pontos.\n");
-            } else if (pontosARemover > passageiros[indice].pontos) {
-                printf("Quantidade de pontos a remover excede os pontos disponíveis.\n");
+    for (int i = 0; i < total_voos; i++) {
+        for (int j = 0; j < MAX; j++) {
+            if (voos[i].assentosVoo[j / MAX_COLUNAS][j % MAX_COLUNAS].ocupado == 1 &&
+                strcmp(voos[i].assentosVoo[j / MAX_COLUNAS][j % MAX_COLUNAS].passageiro, passageiros[codigoPassageiro].nome) == 0) {
+                printf("Voo %s | \nAssento %d | \nOrigem: %s | \nDestino: %s\n",voos[i].codigo, j + 1, voos[i].origem, voos[i].destino);
             }
-        } while (pontosARemover < 0 || pontosARemover > passageiros[indice].pontos);
+        }
+    }
 
-        passageiros[indice].pontos -= pontosARemover;
-        printf("%d pontos removidos. Pontos restantes: %d\n", pontosARemover, passageiros[indice].pontos);
+    int vooEscolhido, assentoEscolhido;
+    printf("\nDigite o número do voo com a reserva que deseja cancelar: ");
+    scanf("%d", &vooEscolhido);
+    getchar();
 
-        salvarPassageiroNoArquivo(&passageiros_fidelidade); // Salvar alterações no arquivo
-    } else {
-        printf("Passageiro não encontrado!\n");
+    printf("Digite o número do assento que deseja cancelar: ");
+    scanf("%d", &assentoEscolhido);
+    getchar();
+
+    Assento *assentoParaCancelar = NULL;
+    for (int i = 0; i < MAX; i++) {
+        if (voos[vooEscolhido - 1].assentosVoo[i / MAX_COLUNAS][i % MAX_COLUNAS].ocupado == 1 &&
+            strcmp(voos[vooEscolhido - 1].assentosVoo[i / MAX_COLUNAS][i % MAX_COLUNAS].passageiro, passageiros[codigoPassageiro].nome) == 0) {
+            assentoParaCancelar = &voos[vooEscolhido - 1].assentosVoo[i / MAX_COLUNAS][i % MAX_COLUNAS];
+            break;
+        }
+    }
+
+    if (assentoParaCancelar == NULL) {
+        printf("Assento não encontrado ou não está associado ao passageiro.\n");
+        return;
+    }
+
+    printf("Confirma o cancelamento do assento %d no voo %s? (1-Sim / 0-Não): ",
+           assentoEscolhido, voos[vooEscolhido - 1].codigo);
+    int confirmar;
+    scanf("%d", &confirmar);
+    getchar();
+
+    if (confirmar != 1) {
+        printf("Operação cancelada.\n");
+        return;
+    }
+
+    assentoParaCancelar->ocupado = 0;  // Tornar o assento desocupado
+    memset(assentoParaCancelar->passageiro, 0, sizeof(assentoParaCancelar->passageiro));  // Limpar dados
+
+    printf("Reserva do assento %d no voo %s cancelada com sucesso!\n",
+           assentoEscolhido, voos[vooEscolhido - 1].codigo);
+    passageiros->pontos -= 10;
+    printf("\nPontos removidos do programa de fidelide devido ao cancelamento de voo\n");
+    salvarReservas();
+}
+
+void buscarReserva() {
+    char nomePassageiro[100];
+    printf("Digite o nome do passageiro: ");
+    fgets(nomePassageiro, sizeof(nomePassageiro), stdin);
+    nomePassageiro[strcspn(nomePassageiro, "\n")] = '\0'; // Remove o '\n' do final da string
+
+    int encontrado = 0;
+
+    for (int i = 0; i < total_voos; i++) {
+        for (int j = 0; j < voos[i].linhas * voos[i].colunas; j++) {
+            // Verifica se o assento está ocupado e se o nome corresponde ao passageiro
+            if (voos[i].assentosVoo[j / voos[i].colunas][j % voos[i].colunas].ocupado == 1 &&
+                strcmp(voos[i].assentosVoo[j / voos[i].colunas][j % voos[i].colunas].passageiro, nomePassageiro) == 0) {
+                encontrado = 1;
+                
+                // Converte o índice linear para linha e coluna
+                int fileira = j / voos[i].colunas + 1;
+                char coluna = 'A' + (j % voos[i].colunas);
+
+                // Exibe os detalhes da reserva
+                printf("Reserva encontrada: Voo %s | Assento %d%c | Origem: %s | Destino: %s\n",
+                       voos[i].codigo, fileira, coluna, voos[i].origem, voos[i].destino);
+            }
+        }
+    }
+
+    if (!encontrado) {
+        printf("Nenhuma reserva encontrada para o passageiro %s.\n", nomePassageiro);
     }
 }
+
 
 /*---------------------------------------------------------------FUNÇÕES DE FLUXO---------------------------------------------------------------------*/
 
@@ -1121,8 +1330,8 @@ void TRIPULANTES(){
             break;
         case 1:
            while (continuar && total_tripulantes < MAX_CODIGOS) {
-        CadastroTripulantes(&tripulantes);
-        SalvarTripulante(&tripulantes);
+        CadastroTripulantes(&tripulantes[total_tripulantes]);
+        SalvarTripulante(&tripulantes[total_tripulantes]);
         total_tripulantes++;
 
         printf("\nDeseja cadastrar outro tripulante? (1 - Sim / 0 - Não): ");
@@ -1179,12 +1388,7 @@ void VOOS() {
             default:
                 printf("Opção inválida!\n");
         }
-    } while (opcao != 3);
-
-    return 0;
-}
-
-void ASSENTOS(){
+    } while (opcao != 0);
 
 }
 
@@ -1230,7 +1434,47 @@ void PASSAGEIRO(){
 }while (opcao != 0);
 }
 
-void FIDELIDADE(){}
+void gerenciarReservas() {
+    int opcao;
+
+    do {
+        printf("\n\n=== Gerenciamento de Reservas ===\n");
+        printf("1 - Cadastro de Reserva\n");
+        printf("2 - Cancelamento de Reserva\n");
+        printf("3 - Buscar Reserva\n");
+        printf("0 - Voltar ao menu principal\n");
+        printf("Escolha uma opcao: ");
+        
+        if (scanf("%d", &opcao) != 1) {
+            printf("Entrada invalida! Por favor, insira um numero.\n");
+            while (getchar() != '\n'); // Limpa o buffer
+            continue;
+        }
+        getchar(); // Limpar buffer para próximas leituras
+
+        switch (opcao) {
+            case 1:
+                cadastrarReserva();
+                break;
+
+            case 2:
+                cancelarReserva();
+                break;
+
+            case 3:
+                buscarReserva();
+                break;
+
+            case 0:
+                printf("Voltando ao menu principal...\n");
+                break;
+
+            default:
+                printf("Opcao invalida! Por favor, escolha entre 0 e 3.\n");
+        }
+    } while (opcao != 0);
+}
+
 /*-----------------------------------------------------------------MAIN--------------------------------------------------------------------------*/
 
 int main() {
@@ -1247,16 +1491,13 @@ int main() {
     printf("\n");
     printf("1 - Tripulantes\n");
     printf("2 - Voos\n");
-    printf("3 - Assentos\n");
-    printf("4 - Passageiros\n");
-    printf("5 - Reservas\n");
-    printf("6 - Programa fidelidade\n");
+    printf("3 - Passageiros\n");
+    printf("4 - Reservas\n");
     printf("0 - SAIR\n");
 
-    printf("\nEscolha uma das opcoes (Entre 0 e 5): ");
+    printf("\nEscolha uma das opcoes (Entre 0 e 4): ");
     scanf("%d", &opcao);
     printf("\n");
-
 
         switch (opcao)
         {
@@ -1270,16 +1511,10 @@ int main() {
             VOOS();
             break;
         case 3:
-            ASSENTOS();
-            break;
-        case 4:
             PASSAGEIRO();
             break;
-        case 5:
-            //RESERVAS();
-            break;
-        case 6:
-            registrarPontos();
+        case 4:
+            gerenciarReservas();
             break;
         default:
             printf("\nNumero invalido, selecione novamente!\n");
