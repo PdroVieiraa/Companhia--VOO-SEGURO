@@ -406,6 +406,7 @@ int ocuparAssento(Voo *voo, int fileira, char coluna, char *nomePassageiro) {
     strcpy(assento->passageiro, nomePassageiro);
     printf("Assento %d%c ocupado com sucesso por %s!\n", fileira, coluna, nomePassageiro);
     return 1;
+    passageiros->pontos += 10;
 }
 
 void selecionarAssento(Voo *meuVoo) {
@@ -1236,6 +1237,7 @@ void cancelarReserva() {
     assento->ocupado = 0;
     strcpy(assento->passageiro, "");
     printf("Reserva cancelada com sucesso!\n");
+    passageiros->pontos -= 10;
 }
 
 void buscarReserva() {

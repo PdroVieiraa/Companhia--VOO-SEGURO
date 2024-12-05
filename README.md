@@ -1,5 +1,6 @@
 # Trabalho Acadêmico de Algoritimos e estrutura de Dados 1 - PUC MINAS
 
+
 # **Companhia Aérea Voo Seguro**
 
 A **Voo Seguro** é uma companhia aérea que visa garantir a satisfação de seus passageiros e promover sua fidelização.  
@@ -20,9 +21,6 @@ Para resolver esses problemas, a **Voo Seguro** contratou uma equipe de desenvol
 - **Pedro Vieira** – Scrum Master   
 
 ---
-
-
-## **Documentação**
-
+LINK PARA GIT: https://github.com/PdroVieiraa/Platinum-Logic-Innovation-Group
 
 ---
