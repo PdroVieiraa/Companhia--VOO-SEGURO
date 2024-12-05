@@ -359,45 +359,40 @@ void inicializarAssentos(Voo *voo) {
 }
 
 void exibirAssentos(Voo *voo) {
-
-
-    int linhas = voo->linhas;
-    int colunas = voo->colunas;
-
-    if (voo == NULL) {
-        printf("Erro: Voo não encontrado.\n");
+    if (!voo || voo->linhas <= 0 || voo->colunas <= 0) {
+        printf("Erro: Voo inválido.\n");
         return;
     }
 
     printf("Mapa de Assentos do Voo %s:\n\n", voo->codigo);
-    
-    // Verifica se as linhas e colunas são válidas
-    if (linhas <= 0 || colunas <= 0) {
-        printf("Erro: Linhas ou colunas inválidas.\n");
-        return;
-    }
-
-    // Exibe os cabeçalhos das colunas (A, B, C, etc.)
     printf("    ");
-    for (char c = 'A'; c < 'A' + colunas; c++) {
-        printf("%c ", c);  // Exibe o nome da coluna
+    for (char c = 'A'; c < 'A' + voo->colunas; c++) {
+        printf("%c ", c);
     }
     printf("\n");
 
-    // Exibe as linhas de assentos
-    for (int i = 0; i < linhas; i++) {
-        printf("%2d |", i + 1);  // Exibe o número da linha
-        for (int j = 0; j < colunas; j++) {
-            printf(" %d ", voo->assentosVoo[i][j].ocupado);  // Exibe se o assento está ocupado (1) ou não (0)
+    for (int i = 0; i < voo->linhas; i++) {
+        printf("%2d |", i + 1);
+        for (int j = 0; j < voo->colunas; j++) {
+            printf(" %d ", voo->assentosVoo[i][j].ocupado);
         }
         printf("\n");
     }
 }
 
+int colunaParaIndice(char coluna, int colunas) {
+    if (coluna >= 'A' && coluna < 'A' + colunas) {
+        return coluna - 'A';
+    } else if (coluna >= 'a' && coluna < 'a' + colunas) {
+        return coluna - 'a'; // Suporte para letras minúsculas
+    }
+    return -1; // Letra inválida
+}
+
 int ocuparAssento(Voo *voo, int fileira, char coluna, char *nomePassageiro) {
-    int colIdx = coluna - 'A';
-    if (fileira < 1 || fileira > voo->linhas || colIdx < 0 || colIdx >= voo->colunas) {
-        printf("Assento inválido!\n");
+    int colIdx = colunaParaIndice(coluna, voo->colunas);
+    if (fileira < 1 || fileira > voo->linhas || colIdx == -1) {
+        printf("Assento inválido! Fileira deve estar entre 1 e %d, e coluna entre A e %c.\n", voo->linhas, 'A' + voo->colunas - 1);
         return 0;
     }
 
@@ -413,27 +408,15 @@ int ocuparAssento(Voo *voo, int fileira, char coluna, char *nomePassageiro) {
     return 1;
 }
 
-int colunaParaIndice(char coluna, int colunas) {
-    if (coluna >= 'A' && coluna < 'A' + colunas) {
-        return coluna - 'A';
-    } else if (coluna >= 'a' && coluna < 'a' + colunas) {
-        return coluna - 'a';
-    }
-    return -1; // Letra inválida
-}
-
 void selecionarAssento(Voo *meuVoo) {
     int opcao, fileira;
     char coluna;
-    Passageiro nomePassageiro;
+    char nomePassageiro[100];
 
-    if (meuVoo == NULL) {
-        printf("Erro: Voo não encontrado.\n");
+    if (!meuVoo || meuVoo->linhas <= 0 || meuVoo->colunas <= 0) {
+        printf("Erro: Configuração inválida do voo.\n");
         return;
     }
-
-    printf("Linhas: %d\n", meuVoo->linhas);
-    printf("Colunas: %d\n", meuVoo->colunas);
 
     do {
         printf("\n1. Exibir mapa de assentos\n");
@@ -449,18 +432,25 @@ void selecionarAssento(Voo *meuVoo) {
             case 2:
                 printf("Digite a fileira (1-%d): ", meuVoo->linhas);
                 scanf("%d", &fileira);
-                printf("Digite a coluna (A-%c): ", 'A' + meuVoo->colunas - 1);
+                getchar(); // Limpar buffer
+
+                printf("Digite a coluna (1-%d): ", 'A' + meuVoo->colunas - 1);
                 scanf(" %c", &coluna);
+                getchar(); // Limpar buffer
+
                 printf("Digite o nome do passageiro: ");
-                scanf(" %[^\n]", nomePassageiro.nome);
-                ocuparAssento(meuVoo, fileira, coluna, nomePassageiro.nome);
-                printf("Assento ocupado!\n");
+                fgets(nomePassageiro, sizeof(nomePassageiro), stdin);
+                nomePassageiro[strcspn(nomePassageiro, "\n")] = '\0';
+
+                if (!ocuparAssento(meuVoo, fileira, coluna, nomePassageiro)) {
+                    printf("Falha ao ocupar o assento. Tente novamente.\n");
+                }
                 break;
             case 0:
                 printf("Encerrando...\n");
                 break;
             default:
-                printf("Opção inválida!\n");
+                printf("Opção inválida! Tente novamente.\n");
         }
     } while (opcao != 0);
 }
@@ -601,7 +591,7 @@ void adicionarVoo() {
 
     printf("Digite a quantidade de fileiras no avião:");
     scanf("%d", &novoVoo.linhas);
-    printf("\nDigite a quantidade de assentos por fileira (A-F):");
+    printf("\nDigite a quantidade de assentos por fileira (1-6):");
     scanf("%d", &novoVoo.colunas);
 
     inicializarAssentos(&novoVoo);
@@ -612,7 +602,7 @@ void adicionarVoo() {
     Tripulantes tripulante;
     int adicionar_tripulantes;
 
-    while (piloto_encontrado == 0 || copiloto_encontrado == 0) {
+    while (piloto_encontrado == 0 || copiloto_encontrado == 0 || adicionar_tripulantes == 0) {
         printf("-----------------------------\n");
         printf("-Tripulantes: \n");
         printf("1- Adicionar\n");
@@ -1206,62 +1196,46 @@ void cadastrarReserva() {
 }
 
 void cancelarReserva() {
-    int codigoPassageiro;
-    printf("Digite o código do passageiro: ");
-    scanf("%d", &codigoPassageiro);
-    getchar();
+    int vooEscolhido, fileira;
+    char coluna;
+    char nomePassageiro[100];
 
-    for (int i = 0; i < total_voos; i++) {
-        for (int j = 0; j < MAX; j++) {
-            if (voos[i].assentosVoo[j / MAX_COLUNAS][j % MAX_COLUNAS].ocupado == 1 &&
-                strcmp(voos[i].assentosVoo[j / MAX_COLUNAS][j % MAX_COLUNAS].passageiro, passageiros[codigoPassageiro].nome) == 0) {
-                printf("Voo %s | \nAssento %d | \nOrigem: %s | \nDestino: %s\n",voos[i].codigo, j + 1, voos[i].origem, voos[i].destino);
-            }
-        }
-    }
+    printf("Digite o nome do passageiro: ");
+    fgets(nomePassageiro, sizeof(nomePassageiro), stdin);
+    nomePassageiro[strcspn(nomePassageiro, "\n")] = '\0';
 
-    int vooEscolhido, assentoEscolhido;
-    printf("\nDigite o número do voo com a reserva que deseja cancelar: ");
+    printf("Digite o número do voo (1 a %d): ", total_voos);
     scanf("%d", &vooEscolhido);
-    getchar();
+    getchar(); // Limpar buffer
 
-    printf("Digite o número do assento que deseja cancelar: ");
-    scanf("%d", &assentoEscolhido);
-    getchar();
-
-    Assento *assentoParaCancelar = NULL;
-    for (int i = 0; i < MAX; i++) {
-        if (voos[vooEscolhido - 1].assentosVoo[i / MAX_COLUNAS][i % MAX_COLUNAS].ocupado == 1 &&
-            strcmp(voos[vooEscolhido - 1].assentosVoo[i / MAX_COLUNAS][i % MAX_COLUNAS].passageiro, passageiros[codigoPassageiro].nome) == 0) {
-            assentoParaCancelar = &voos[vooEscolhido - 1].assentosVoo[i / MAX_COLUNAS][i % MAX_COLUNAS];
-            break;
-        }
-    }
-
-    if (assentoParaCancelar == NULL) {
-        printf("Assento não encontrado ou não está associado ao passageiro.\n");
+    if (vooEscolhido < 1 || vooEscolhido > total_voos) {
+        printf("Voo inválido.\n");
         return;
     }
 
-    printf("Confirma o cancelamento do assento %d no voo %s? (1-Sim / 0-Não): ",
-           assentoEscolhido, voos[vooEscolhido - 1].codigo);
-    int confirmar;
-    scanf("%d", &confirmar);
-    getchar();
+    printf("Digite a fileira: ");
+    scanf("%d", &fileira);
+    printf("Digite a coluna: ");
+    scanf(" %c", &coluna);
 
-    if (confirmar != 1) {
-        printf("Operação cancelada.\n");
+    Voo *voo = &voos[vooEscolhido - 1];
+    int colIdx = colunaParaIndice(coluna, voo->colunas);
+
+    if (fileira < 1 || fileira > voo->linhas || colIdx == -1) {
+        printf("Assento inválido.\n");
         return;
     }
 
-    assentoParaCancelar->ocupado = 0;  // Tornar o assento desocupado
-    memset(assentoParaCancelar->passageiro, 0, sizeof(assentoParaCancelar->passageiro));  // Limpar dados
+    Assento *assento = &voo->assentosVoo[fileira - 1][colIdx];
+    if (!assento->ocupado || strcmp(assento->passageiro, nomePassageiro) != 0) {
+        printf("Assento não está reservado por %s.\n", nomePassageiro);
+        return;
+    }
 
-    printf("Reserva do assento %d no voo %s cancelada com sucesso!\n",
-           assentoEscolhido, voos[vooEscolhido - 1].codigo);
-    passageiros->pontos -= 10;
-    printf("\nPontos removidos do programa de fidelide devido ao cancelamento de voo\n");
-    salvarReservas();
+    // Cancelar a reserva
+    assento->ocupado = 0;
+    strcpy(assento->passageiro, "");
+    printf("Reserva cancelada com sucesso!\n");
 }
 
 void buscarReserva() {
