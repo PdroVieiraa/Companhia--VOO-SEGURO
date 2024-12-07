@@ -9,6 +9,7 @@ Atualmente, o controle de voos, reservas e tripulação é realizado em planilha
 
 Para resolver esses problemas, a **Voo Seguro** contratou uma equipe de desenvolvedores de software (**Platinum Logic & Innovation Group ou PLIG**) para desenvolver um sistema de gerenciamento de voos que foi nomeado de **SkyOps**
 
+** Codigo principal está localizado na pasta SkyOps/Codigo/SkyOps.c **
 **Requisitos e informações extra no PDF de [Requisitos](SkyOps/Docs/Trabalho_Pratico.pdf)**
 
 ---
@@ -19,8 +20,5 @@ Para resolver esses problemas, a **Voo Seguro** contratou uma equipe de desenvol
 - **Lucas Erick**   
 - **Italo Vinhas**    
 - **Pedro Vieira** – Scrum Master   
-
----
-LINK PARA GIT: https://github.com/PdroVieiraa/Platinum-Logic-Innovation-Group
 
 ---
